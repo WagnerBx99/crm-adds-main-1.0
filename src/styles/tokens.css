@@ -1,0 +1,26 @@
+/* Tokens de Design - Gerado automaticamente */
+:root {
+    --surface-0: #FFFFFF;
+    --surface-1: #F4F7FA;
+    --text-high: #111827;
+    --text-low: #475569;
+    --accent-primary: #1999C0;
+    --accent-secondary: #D96A1C;
+    --accent-tertiary: #5A1FCC;
+    --semantic-success: #22C65B;
+    --semantic-warning: #FFB547;
+    --semantic-error: #D9363A;
+}
+
+[data-theme="dark"] {
+    --surface-0: #0F111A;
+    --surface-1: #1B1E2A;
+    --text-high: #FFFFFF;
+    --text-low: #A3A3B1;
+    --accent-primary: #21ADD6;
+    --accent-secondary: #FF7B1F;
+    --accent-tertiary: #6D28D9;
+    --semantic-success: #39FF14;
+    --semantic-warning: #FFAA00;
+    --semantic-error: #FF4D4F;
+}

@@ -1,0 +1,918 @@
+/* ===========================================
+   📱 KANBAN - SCROLL HORIZONTAL RESPONSIVO
+   =========================================== */
+
+/* 🎯 SCROLL HORIZONTAL FORÇADO - SOLUÇÃO EXPERT */
+/* Garante que o scroll horizontal sempre apareça quando necessário */
+.overflow-x-auto {
+  /* Força scroll horizontal sempre visível */
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  
+  /* Scrollbar sempre presente - Firefox */
+  scrollbar-width: thin !important;
+  scrollbar-color: #60a5fa #f1f5f9 !important;
+}
+
+/* Webkit browsers (Chrome, Safari, Edge) */
+.overflow-x-auto::-webkit-scrollbar {
+  height: 8px !important;
+  background-color: #f1f5f9 !important;
+  display: block !important;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: #f1f5f9 !important;
+  border-radius: 4px !important;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: linear-gradient(to right, #60a5fa, #3b82f6) !important;
+  border-radius: 4px !important;
+  border: 1px solid #e2e8f0 !important;
+  transition: all 0.2s ease !important;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to right, #3b82f6, #2563eb) !important;
+}
+
+.overflow-x-auto::-webkit-scrollbar-corner {
+  background: #f1f5f9;
+}
+
+/* 🎨 Background Grid Pattern */
+.bg-grid-slate-100\/50 {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='rgb(226 232 240 / 0.5)'%3e%3cpath d='m0 .5h31.5v31'/%3e%3c/svg%3e");
+}
+
+.bg-grid-slate-100\/30 {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='rgb(226 232 240 / 0.3)'%3e%3cpath d='m0 .5h31.5v31'/%3e%3c/svg%3e");
+}
+
+/* 🎯 Scrollbar Hide Utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* 🌊 Smooth Scroll Enhanced */
+.smooth-scroll {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* 🎨 Enhanced Card Animations */
+.kanban-card-drag-overlay {
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  will-change: transform;
+}
+
+.kanban-card-drag-overlay::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  background: linear-gradient(45deg, 
+    rgba(59, 130, 246, 0.1),
+    rgba(147, 51, 234, 0.1),
+    rgba(59, 130, 246, 0.1)
+  );
+  border-radius: inherit;
+  z-index: -1;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0%, 100% {
+    background-position: -200% 0;
+  }
+  50% {
+    background-position: 200% 0;
+  }
+}
+
+/* Contêiner principal com scroll horizontal suave - PATCH 2 IMPLEMENTADO */
+.kanban-scroll-container {
+  /* Garante que a largura se adapte ao total de colunas */
+  min-width: max-content;          /* cada coluna mantém 320 px + gap   */
+  overflow-x: auto;                /* barra de rolagem horizontal       */
+  overflow-y: hidden;              /* evita barra vertical interna      */
+  padding-bottom: 0.5rem;          /* espaço para a scrollbar           */
+  scrollbar-width: thin;           /* Firefox                           */
+  -webkit-overflow-scrolling: touch; /* iOS / 모바일                      */
+  
+  /* Otimizações adicionais para melhor experiência */
+  scroll-behavior: smooth;
+  width: 100%;
+  
+  /* Barra de scroll customizada moderna - SEMPRE VISÍVEL */
+  scrollbar-color: rgba(59, 130, 246, 0.4) rgba(248, 250, 252, 0.8);
+}
+
+.kanban-scroll-container::-webkit-scrollbar {
+  height: 12px; /* Mais alto para ser mais visível */
+  background: rgba(248, 250, 252, 0.8);
+}
+
+.kanban-scroll-container::-webkit-scrollbar-track {
+  background: rgba(248, 250, 252, 0.8);
+  border-radius: 6px;
+  border: 1px solid rgba(226, 232, 240, 0.5);
+}
+
+.kanban-scroll-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(to right, rgba(59, 130, 246, 0.6), rgba(99, 102, 241, 0.6));
+  border-radius: 6px;
+  border: 2px solid rgba(248, 250, 252, 0.8);
+  transition: all 0.2s ease;
+  min-width: 60px; /* Largura mínima do thumb */
+}
+
+.kanban-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to right, rgba(59, 130, 246, 0.8), rgba(99, 102, 241, 0.8));
+  transform: scaleY(1.2);
+}
+
+.kanban-scroll-container:hover::-webkit-scrollbar-thumb {
+  background: linear-gradient(to right, rgba(59, 130, 246, 0.7), rgba(99, 102, 241, 0.7));
+}
+
+/* Força scrollbar sempre presente */
+.kanban-scroll-container::-webkit-scrollbar-corner {
+  background: rgba(248, 250, 252, 0.8);
+}
+
+/* Container interno das colunas com responsividade */
+.kanban-columns-container {
+  display: flex;
+  gap: 1.5rem;
+  min-height: 600px;
+  padding: 1.5rem;
+  
+  /* Largura fixa para garantir scroll horizontal sempre */
+  width: max-content;
+  min-width: calc(100vw + 400px); /* Força scroll horizontal */
+}
+
+/* ===========================================
+   📏 RESPONSIVIDADE DAS COLUNAS MODERNA
+   =========================================== */
+
+/* Desktop (>= 1024px) - Colunas mais largas */
+@media (min-width: 1024px) {
+  .kanban-column {
+    width: 320px;
+    min-width: 320px;
+    max-width: 320px;
+    flex-shrink: 0;
+  }
+  
+  .kanban-columns-container {
+    gap: 1.5rem;
+    min-width: calc(320px * 6 + 1.5rem * 7 + 3rem); /* Força scroll com 6 colunas */
+    width: max-content;
+  }
+}
+
+/* Tablet (768px - 1023px) - Colunas médias */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .kanban-column {
+    width: 280px;
+    min-width: 280px;
+    max-width: 280px;
+    flex-shrink: 0;
+  }
+  
+  .kanban-columns-container {
+    gap: 1rem;
+    min-width: calc(280px * 5 + 1rem * 6 + 2rem); /* Força scroll com 5 colunas */
+    width: max-content;
+  }
+}
+
+/* Mobile Large (480px - 767px) - Colunas compactas */
+@media (min-width: 480px) and (max-width: 767px) {
+  .kanban-column {
+    width: 260px;
+    min-width: 260px;
+    max-width: 260px;
+    flex-shrink: 0;
+  }
+  
+  .kanban-columns-container {
+    gap: 0.75rem;
+    min-width: calc(260px * 4 + 0.75rem * 5 + 1.5rem); /* Força scroll com 4 colunas */
+    width: max-content;
+  }
+}
+
+/* Mobile Small (< 480px) - Colunas mínimas */
+@media (max-width: 479px) {
+  .kanban-column {
+    width: 240px;
+    min-width: 240px;
+    max-width: 240px;
+    flex-shrink: 0;
+  }
+  
+  .kanban-columns-container {
+    gap: 0.5rem;
+    min-width: calc(240px * 3 + 0.5rem * 4 + 1rem); /* Força scroll com 3 colunas */
+    width: max-content;
+  }
+}
+
+/* ===========================================
+   🎯 INDICADORES DE SCROLL MODERNOS
+   =========================================== */
+
+/* Sombras suaves para indicar scroll disponível */
+.kanban-scroll-shadow-left {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 24px;
+  background: linear-gradient(
+    to right,
+    rgba(248, 250, 252, 0.95),
+    rgba(248, 250, 252, 0)
+  );
+  pointer-events: none;
+  z-index: 20;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.kanban-scroll-shadow-right {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 24px;
+  background: linear-gradient(
+    to left,
+    rgba(248, 250, 252, 0.95),
+    rgba(248, 250, 252, 0)
+  );
+  pointer-events: none;
+  z-index: 20;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+/* ===========================================
+   📱 OTIMIZAÇÕES MOBILE AVANÇADAS
+   =========================================== */
+
+/* Touch-friendly na navegação mobile */
+@media (max-width: 767px) {
+  .kanban-scroll-container {
+    padding-bottom: 2rem;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+  
+  .kanban-columns-container {
+    min-height: 500px;
+  }
+}
+
+/* ===========================================
+   🎨 ANIMAÇÕES E TRANSIÇÕES AVANÇADAS
+   =========================================== */
+
+.kanban-column {
+  transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform;
+}
+
+/* Hover suave no desktop */
+@media (min-width: 1024px) {
+  .kanban-column:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 
+                0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+}
+
+/* Estados de drag modernos */
+.kanban-column {
+  position: relative;
+  isolation: isolate;
+}
+
+.kanban-column-content {
+  transition: all 0.2s ease;
+  transform-origin: center;
+}
+
+/* Placeholder suave */
+.kanban-placeholder {
+  background: linear-gradient(135deg, 
+    rgba(59, 130, 246, 0.1), 
+    rgba(147, 51, 234, 0.05)
+  );
+  border: 2px dashed rgba(59, 130, 246, 0.3);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  animation: pulse-soft 2s infinite;
+}
+
+@keyframes pulse-soft {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.02);
+  }
+}
+
+/* Feedback visual durante drag */
+.kanban-columns-container::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(59, 130, 246, 0.02);
+  backdrop-filter: blur(1px);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.kanban-dragging .kanban-columns-container::after {
+  opacity: 1;
+}
+
+/* Estados de loading sofisticados */
+.kanban-loading {
+  position: relative;
+  overflow: hidden;
+}
+
+.kanban-loading::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: loading-shimmer 1.5s infinite;
+}
+
+@keyframes loading-shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* ===========================================
+   🎯 UTILIDADES AUXILIARES
+   =========================================== */
+
+/* Estados de focus aprimorados */
+.focus-ring-blue {
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-2 focus:ring-offset-white;
+}
+
+/* Transições suaves globais */
+.transition-smooth {
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Glass morphism effect */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* ===========================================
+   🔧 MODO DEBUG (apenas desenvolvimento)
+   =========================================== */
+
+.debug-scroll {
+  border: 2px solid red !important;
+  background: rgba(255, 0, 0, 0.1) !important;
+}
+
+.debug-column {
+  border: 2px solid blue !important;
+  background: rgba(0, 0, 255, 0.1) !important;
+}
+
+/* ==========================================================================
+   🎨 DRAG & DROP ULTRA-FLUIDO - TRANSIÇÕES PREMIUM
+   ========================================================================== */
+
+/* Estados base otimizados para performance */
+.kanban-card-ultra-compact {
+  /* GPU acceleration para máxima fluidez */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform, opacity, box-shadow;
+  
+  /* Transições suaves e responsivas */
+  transition: all 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  
+  /* Estados de hover ultra-responsivos */
+  &:hover {
+    transform: translateY(-1px) translateZ(0);
+    box-shadow: 
+      0 4px 12px rgba(0, 0, 0, 0.08),
+      0 1px 3px rgba(0, 0, 0, 0.05);
+    border-color: rgba(59, 130, 246, 0.25);
+  }
+}
+
+/* Card durante drag - feedback visual minimalista */
+.sortable-item-dragging {
+  opacity: 0.85 !important;
+  transform: rotate(1deg) scale(1.02) translateZ(100px) !important;
+  z-index: 999 !important;
+  
+  /* Sombra premium durante drag */
+  box-shadow: 
+    0 25px 50px rgba(0, 0, 0, 0.15),
+    0 10px 25px rgba(59, 130, 246, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.9) !important;
+    
+  /* Animação suave de entrada */
+  animation: drag-lift-premium 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  
+  /* Outline sutil para acessibilidade */
+  outline: 2px solid rgba(59, 130, 246, 0.3);
+  outline-offset: 2px;
+}
+
+@keyframes drag-lift-premium {
+  0% {
+    transform: rotate(0deg) scale(1) translateZ(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  100% {
+    transform: rotate(1deg) scale(1.02) translateZ(100px);
+    box-shadow: 
+      0 25px 50px rgba(0, 0, 0, 0.15),
+      0 10px 25px rgba(59, 130, 246, 0.1);
+  }
+}
+
+/* DragOverlay com design premium */
+.kanban-card-drag-overlay {
+  z-index: 9999 !important;
+  pointer-events: none;
+  transform-origin: center;
+  
+  /* Animação de entrada elegante */
+  animation: overlay-appear 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  
+  /* Efeito glassmorphism sutil */
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  
+  /* Borda premium */
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+@keyframes overlay-appear {
+  0% {
+    opacity: 0;
+    transform: scale(0.95) rotate(0deg);
+  }
+  100% {
+    opacity: 0.95;
+    transform: scale(1.02) rotate(1deg);
+  }
+}
+
+/* Colunas com feedback visual ultra-sutil */
+.kanban-column-compact {
+  transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform, background-color, border-color;
+  
+  /* Estado de drag over minimalista */
+  &.drag-over {
+    background-color: rgba(59, 130, 246, 0.02);
+    border-color: rgba(59, 130, 246, 0.15);
+    transform: scale(1.005);
+    
+    /* Animação sutil de pulsação */
+    animation: column-pulse-subtle 2s infinite;
+  }
+}
+
+@keyframes column-pulse-subtle {
+  0%, 100% {
+    background-color: rgba(59, 130, 246, 0.02);
+  }
+  50% {
+    background-color: rgba(59, 130, 246, 0.04);
+  }
+}
+
+/* Placeholder ultra-moderno */
+.drop-indicator {
+  position: relative;
+  height: 3px;
+  margin: 6px 0;
+  border-radius: 2px;
+  background: transparent;
+  transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  
+  &.active {
+    background: linear-gradient(90deg, 
+      rgba(59, 130, 246, 0.8), 
+      rgba(147, 51, 234, 0.6)
+    );
+    
+    /* Efeito shimmer */
+    position: relative;
+    overflow: hidden;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.4), 
+        transparent
+      );
+      animation: shimmer-flow 1.5s infinite;
+    }
+  }
+}
+
+@keyframes shimmer-flow {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* Cards adjacentes durante sorting */
+.sortable-item {
+  transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  
+  &.sorting {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  }
+}
+
+/* Estados para diferentes fases do drag */
+.drag-phase-start .sortable-item:not(.sortable-item-dragging) {
+  transition: transform 0.15s ease-out;
+}
+
+.drag-phase-over .kanban-column-compact {
+  transition: all 0.1s ease-out;
+}
+
+.drag-phase-end .sortable-item {
+  transition: transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Performance otimizada para listas grandes */
+.kanban-performance-optimized {
+  contain: layout style paint;
+  transform: translateZ(0);
+  
+  .sortable-item {
+    contain: layout style;
+    transform: translateZ(0);
+  }
+}
+
+/* Estados de hover aprimorados */
+.sortable-item:not(.sortable-item-dragging):hover .kanban-card-ultra-compact {
+  transform: translateY(-2px) translateZ(0);
+  box-shadow: 
+    0 8px 25px rgba(0, 0, 0, 0.1),
+    0 3px 10px rgba(0, 0, 0, 0.05);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+/* Feedback para reordenação bem-sucedida */
+.reorder-success {
+  animation: reorder-feedback 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+@keyframes reorder-feedback {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+  }
+}
+
+/* Estados para mobile/touch */
+@media (pointer: coarse) {
+  .sortable-item-dragging {
+    transform: rotate(0deg) scale(1.05) translateZ(50px) !important;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2) !important;
+  }
+  
+  .kanban-card-ultra-compact:hover {
+    transform: translateY(-1px) translateZ(0);
+  }
+  
+  /* Feedback tátil visual */
+  .touch-feedback {
+    animation: touch-pulse 0.2s ease-out;
+  }
+}
+
+@keyframes touch-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.98); }
+  100% { transform: scale(1); }
+}
+
+/* Acessibilidade - reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .sortable-item-dragging,
+  .kanban-card-drag-overlay,
+  .drop-indicator,
+  .column-pulse-subtle,
+  .reorder-success,
+  .drag-lift-premium {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  .sortable-item-dragging {
+    opacity: 0.7 !important;
+    transform: scale(1.01) !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+  }
+  
+  .kanban-column-compact.drag-over {
+    background-color: rgba(59, 130, 246, 0.05);
+    transform: none;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .sortable-item-dragging {
+    outline: 3px solid #0066cc !important;
+    outline-offset: 2px;
+  }
+  
+  .drop-indicator.active {
+    background: #0066cc;
+    height: 4px;
+  }
+  
+  .kanban-column-compact.drag-over {
+    border: 2px solid #0066cc;
+    background-color: rgba(0, 102, 204, 0.1);
+  }
+}
+
+/* Focus management durante drag */
+.drag-active {
+  /* Manter focus visível durante operações de drag */
+  .sortable-item:focus-within {
+    outline: 2px solid rgba(59, 130, 246, 0.5);
+    outline-offset: 2px;
+  }
+}
+
+/* Otimizações de GPU */
+.gpu-accelerated {
+  transform: translateZ(0);
+  will-change: transform;
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Transições para diferentes tipos de movimento */
+.horizontal-drag .kanban-column-compact {
+  transition: background-color 0.1s ease-out;
+}
+
+.vertical-drag .sortable-item {
+  transition: transform 0.15s ease-out;
+}
+
+/* Estados finais aprimorados */
+.drag-complete {
+  .sortable-item {
+    transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  
+  .kanban-column-compact {
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+}
+
+/* ==========================================================================
+   🚀 DRAG & DROP ULTRA-OTIMIZADO - SOLUÇÃO 1 TIPO TRELLO/NOTION
+   ========================================================================== */
+
+/* ⚡ Estados base ultra-responsivos */
+.kanban-card-ultra-optimized {
+  /* GPU acceleration máxima */
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  will-change: transform, opacity, box-shadow;
+  
+  /* Transições premium tipo Notion */
+  transition: all 0.25s cubic-bezier(0.18, 0.67, 0.6, 1.22);
+  
+  /* Estados de hover ultra-fluidos */
+  &:hover {
+    transform: translateY(-2px) translate3d(0, 0, 0);
+    box-shadow: 
+      0 8px 25px rgba(0, 0, 0, 0.12),
+      0 3px 10px rgba(0, 0, 0, 0.08);
+    border-color: rgba(59, 130, 246, 0.3);
+  }
+}
+
+/* 🎨 Estados de drag ultra-premium */
+.sortable-item-dragging-optimized {
+  opacity: 0.6 !important;
+  transform: rotate(2deg) scale(1.05) translate3d(0, 0, 100px) !important;
+  z-index: 9999 !important;
+  
+  /* Sombra premium tipo Trello */
+  box-shadow: 
+    0 30px 60px rgba(0, 0, 0, 0.2),
+    0 15px 30px rgba(59, 130, 246, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.9) !important;
+    
+  /* Animação de entrada suave */
+  animation: drag-lift-trello 0.25s cubic-bezier(0.18, 0.67, 0.6, 1.22);
+  
+  /* Borda premium para acessibilidade */
+  outline: 3px solid rgba(59, 130, 246, 0.4);
+  outline-offset: 3px;
+  border-radius: 12px;
+}
+
+@keyframes drag-lift-trello {
+  0% {
+    transform: rotate(0deg) scale(1) translate3d(0, 0, 0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(2deg) scale(1.05) translate3d(0, 0, 100px);
+    box-shadow: 
+      0 30px 60px rgba(0, 0, 0, 0.2),
+      0 15px 30px rgba(59, 130, 246, 0.15);
+    opacity: 0.6;
+  }
+}
+
+/* 🎯 DragOverlay ultra-premium */
+.kanban-card-drag-overlay-optimized {
+  z-index: 9999 !important;
+  pointer-events: none;
+  transform-origin: center;
+  
+  /* Animação de entrada tipo Notion */
+  animation: overlay-appear-notion 0.25s cubic-bezier(0.18, 0.67, 0.6, 1.22);
+  
+  /* Glassmorphism premium */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  
+  /* Borda ultra-sutil */
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 30px 60px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+@keyframes overlay-appear-notion {
+  0% {
+    opacity: 0;
+    transform: scale(0.9) rotate(0deg);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 0.95;
+    transform: scale(1.05) rotate(2deg);
+    filter: blur(0px);
+  }
+}
+
+/* 🏛️ Colunas com feedback ultra-sutil */
+.kanban-column-optimized {
+  transition: all 0.25s cubic-bezier(0.18, 0.67, 0.6, 1.22);
+  will-change: transform, background-color, border-color;
+  
+  /* Estado de drag over minimalista tipo Notion */
+  &.drag-over-optimized {
+    background-color: rgba(59, 130, 246, 0.025);
+    border-color: rgba(59, 130, 246, 0.2);
+    transform: scale(1.01);
+    
+    /* Animação sutil de respiração */
+    animation: column-breathe 3s infinite;
+  }
+}
+
+@keyframes column-breathe {
+  0%, 100% {
+    background-color: rgba(59, 130, 246, 0.025);
+    transform: scale(1.01);
+  }
+  50% {
+    background-color: rgba(59, 130, 246, 0.04);
+    transform: scale(1.015);
+  }
+}
+
+/* 🎪 Feedback visual durante fases do drag */
+.drag-active .kanban-card-ultra-optimized:not(.sortable-item-dragging-optimized) {
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+.drag-phase-over .kanban-column-optimized {
+  transition: all 0.15s ease-out;
+}
+
+.drag-phase-end .sortable-item {
+  transition: transform 0.3s cubic-bezier(0.18, 0.67, 0.6, 1.22);
+}
+
+/* 🚀 Performance otimizada para listas grandes */
+.kanban-performance-ultra {
+  contain: layout style paint;
+  transform: translate3d(0, 0, 0);
+  
+  .sortable-item {
+    contain: layout style;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* 📱 Otimizações para toque (mobile) tipo Trello */
+@media (pointer: coarse) {
+  .sortable-item-dragging-optimized {
+    transform: rotate(0deg) scale(1.08) translate3d(0, 0, 100px);
+    box-shadow: 
+      0 40px 80px rgba(0, 0, 0, 0.25),
+      0 20px 40px rgba(59, 130, 246, 0.2);
+  }
+  
+  .kanban-column-optimized.drag-over-optimized {
+    transform: scale(1.02);
+    background-color: rgba(59, 130, 246, 0.05);
+  }
+}
+
+/* 🎨 Estados específicos para diferentes tipos de drag */
+.drag-reordering-optimized .kanban-card-ultra-optimized {
+  transition: transform 0.25s cubic-bezier(0.18, 0.67, 0.6, 1.22);
+}
+
+.drag-between-columns-optimized .kanban-column-optimized {
+  transition: all 0.2s ease-out;
+}
+
+/* ♿ Acessibilidade mantida */
+@media (prefers-reduced-motion: reduce) {
+  .kanban-card-ultra-optimized,
+  .sortable-item-dragging-optimized,
+  .kanban-column-optimized,
+  .kanban-card-drag-overlay-optimized {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  .sortable-item-dragging-optimized {
+    transform: scale(1.02);
+    opacity: 0.7;
+  }
+} 

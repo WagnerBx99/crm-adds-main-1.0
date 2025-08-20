@@ -1,0 +1,80 @@
+{
+  "color": {
+    "surface": {
+      "0": {
+        "light": "#FFFFFF",
+        "dark": "#0F111A",
+        "value": "var(--surface-0)"
+      },
+      "1": {
+        "light": "#F4F7FA", 
+        "dark": "#1B1E2A",
+        "value": "var(--surface-1)"
+      }
+    },
+    "text": {
+      "high": {
+        "light": "#111827",
+        "dark": "#FFFFFF", 
+        "value": "var(--text-high)"
+      },
+      "low": {
+        "light": "#475569",
+        "dark": "#A3A3B1",
+        "value": "var(--text-low)"
+      }
+    },
+    "accent": {
+      "primary": {
+        "light": "#1999C0",
+        "dark": "#21ADD6",
+        "value": "var(--accent-primary)",
+        "hover": "color-mix(in srgb, var(--accent-primary) 85%, white)",
+        "active": "color-mix(in srgb, var(--accent-primary) 70%, black)",
+        "disabled": "color-mix(in srgb, var(--accent-primary) 40%, transparent)"
+      },
+      "secondary": {
+        "light": "#D96A1C",
+        "dark": "#FF7B1F",
+        "value": "var(--accent-secondary)",
+        "hover": "color-mix(in srgb, var(--accent-secondary) 85%, white)",
+        "active": "color-mix(in srgb, var(--accent-secondary) 70%, black)",
+        "disabled": "color-mix(in srgb, var(--accent-secondary) 40%, transparent)"
+      },
+      "tertiary": {
+        "light": "#5A1FCC",
+        "dark": "#6D28D9",
+        "value": "var(--accent-tertiary)",
+        "hover": "color-mix(in srgb, var(--accent-tertiary) 85%, white)",
+        "active": "color-mix(in srgb, var(--accent-tertiary) 70%, black)",
+        "disabled": "color-mix(in srgb, var(--accent-tertiary) 40%, transparent)"
+      }
+    },
+    "semantic": {
+      "success": {
+        "light": "#22C65B",
+        "dark": "#39FF14",
+        "value": "var(--semantic-success)",
+        "hover": "color-mix(in srgb, var(--semantic-success) 85%, white)",
+        "active": "color-mix(in srgb, var(--semantic-success) 70%, black)",
+        "disabled": "color-mix(in srgb, var(--semantic-success) 40%, transparent)"
+      },
+      "warning": {
+        "light": "#FFB547",
+        "dark": "#FFAA00",
+        "value": "var(--semantic-warning)",
+        "hover": "color-mix(in srgb, var(--semantic-warning) 85%, white)",
+        "active": "color-mix(in srgb, var(--semantic-warning) 70%, black)",
+        "disabled": "color-mix(in srgb, var(--semantic-warning) 40%, transparent)"
+      },
+      "error": {
+        "light": "#D9363A",
+        "dark": "#FF4D4F",
+        "value": "var(--semantic-error)",
+        "hover": "color-mix(in srgb, var(--semantic-error) 85%, white)",
+        "active": "color-mix(in srgb, var(--semantic-error) 70%, black)",
+        "disabled": "color-mix(in srgb, var(--semantic-error) 40%, transparent)"
+      }
+    }
+  }
+} 

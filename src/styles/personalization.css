@@ -1,0 +1,239 @@
+/* Estilos para a página de personalização pública */
+.public-personalization {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Animações suaves para os steps */
+.step-indicator {
+  transition: all 0.3s ease-in-out;
+}
+
+.step-indicator.active {
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.15);
+}
+
+/* Cards de produtos com hover animado */
+.product-card {
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.product-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.product-card.selected {
+  border-color: #3b82f6;
+  background-color: #eff6ff;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Inputs de personalização */
+.customization-input {
+  transition: border-color 0.2s ease-in-out;
+}
+
+.customization-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Preview do produto */
+.product-preview {
+  transition: all 0.3s ease-in-out;
+}
+
+.product-preview:hover {
+  transform: scale(1.02);
+}
+
+/* Resumo da personalização */
+.customization-summary {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border: 1px solid #3b82f6;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 16px;
+}
+
+/* Botões com estilo melhorado */
+.btn-primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  padding: 12px 24px;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-primary:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Cards do dashboard */
+.dashboard-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease-in-out;
+}
+
+.dashboard-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+/* Estilo para o header público */
+.public-header {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Indicador de progresso */
+.progress-bar {
+  background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+  height: 4px;
+  border-radius: 2px;
+  transition: width 0.3s ease-in-out;
+}
+
+/* Status badges */
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-pending {
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fbbf24;
+}
+
+.status-contacted {
+  background-color: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #3b82f6;
+}
+
+.status-completed {
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #10b981;
+}
+
+/* Animação de loading */
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsividade melhorada */
+@media (max-width: 768px) {
+  .product-card {
+    margin-bottom: 16px;
+  }
+  
+  .step-indicator {
+    font-size: 14px;
+  }
+  
+  .btn-primary {
+    width: 100%;
+    margin-top: 8px;
+  }
+  
+  .customization-summary {
+    margin-top: 12px;
+    padding: 12px;
+  }
+}
+
+/* Acessibilidade */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Focus indicators */
+.focus-visible:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Animação suave para transições de conteúdo */
+.content-transition {
+  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+.content-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.content-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Estilo para o iframe do preview */
+.iframe-preview {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: white;
+}
+
+/* Cards de estatísticas */
+.stats-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-left: 4px solid #3b82f6;
+}
+
+.stats-card .number {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.stats-card .label {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-top: 4px;
+} 

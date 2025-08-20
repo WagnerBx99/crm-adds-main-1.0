@@ -1,0 +1,7 @@
+Para criar a imagem do ADDS Implant:
+
+1. Baixe a imagem do produto ADDS Implant anexada ao chat
+2. Salve como "adds_implant.jpg" na pasta "public/images/products/"
+3. O arquivo deve estar localizado em: public/images/products/adds_implant.jpg
+
+Este arquivo é apenas um placeholder com instruções já que não podemos baixar diretamente a imagem. 
