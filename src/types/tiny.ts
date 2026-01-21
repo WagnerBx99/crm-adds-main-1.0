@@ -304,3 +304,147 @@ export interface RespostaNotasFiscais {
   numero_paginas: number;
   notas_fiscais?: Array<{ nota_fiscal: NotaFiscal }>;
 } 
+
+/**
+ * Enum de situação de conta financeira
+ */
+export enum SituacaoConta {
+  ABERTO = "aberto",
+  PAGO = "pago",
+  PARCIAL = "parcial",
+  CANCELADO = "cancelado",
+  VENCIDO = "vencido"
+}
+
+/**
+ * Interface para filtros de contas a pagar
+ */
+export interface FiltroContaPagar {
+  dataInicial?: string;
+  dataFinal?: string;
+  dataVencimentoInicial?: string;
+  dataVencimentoFinal?: string;
+  situacao?: SituacaoConta | string;
+  fornecedor?: string;
+  numero?: string;
+  pagina?: number;
+}
+
+/**
+ * Interface para filtros de contas a receber
+ */
+export interface FiltroContaReceber {
+  dataInicial?: string;
+  dataFinal?: string;
+  dataVencimentoInicial?: string;
+  dataVencimentoFinal?: string;
+  situacao?: SituacaoConta | string;
+  cliente?: string;
+  numero?: string;
+  pagina?: number;
+}
+
+/**
+ * Interface para conta a pagar
+ */
+export interface ContaPagar {
+  id: string;
+  numero_documento: string;
+  data_emissao: string;
+  data_vencimento: string;
+  data_pagamento?: string;
+  valor: number;
+  valor_pago: number;
+  saldo: number;
+  situacao: string;
+  fornecedor: {
+    id: string;
+    nome: string;
+    cpf_cnpj?: string;
+  };
+  categoria?: string;
+  conta_bancaria?: string;
+  forma_pagamento?: string;
+  observacoes?: string;
+  historico?: string;
+}
+
+/**
+ * Interface para conta a receber
+ */
+export interface ContaReceber {
+  id: string;
+  numero_documento: string;
+  data_emissao: string;
+  data_vencimento: string;
+  data_recebimento?: string;
+  valor: number;
+  valor_recebido: number;
+  saldo: number;
+  situacao: string;
+  cliente: {
+    id: string;
+    nome: string;
+    cpf_cnpj?: string;
+  };
+  categoria?: string;
+  conta_bancaria?: string;
+  forma_recebimento?: string;
+  observacoes?: string;
+  historico?: string;
+  numero_pedido?: string;
+  numero_nf?: string;
+}
+
+/**
+ * Interface para resumo financeiro
+ */
+export interface ResumoFinanceiro {
+  periodo: {
+    inicio: string;
+    fim: string;
+  };
+  contas_pagar: {
+    total: number;
+    pago: number;
+    pendente: number;
+    vencido: number;
+    quantidade: number;
+  };
+  contas_receber: {
+    total: number;
+    recebido: number;
+    pendente: number;
+    vencido: number;
+    quantidade: number;
+  };
+  saldo: number;
+  fluxo_caixa: {
+    entradas: number;
+    saidas: number;
+    saldo: number;
+  };
+}
+
+/**
+ * Interface para lançamento financeiro genérico
+ */
+export interface LancamentoFinanceiro {
+  id: string;
+  tipo: 'pagar' | 'receber';
+  numero_documento: string;
+  data_emissao: string;
+  data_vencimento: string;
+  data_baixa?: string;
+  valor: number;
+  valor_baixa: number;
+  saldo: number;
+  situacao: string;
+  entidade: {
+    id: string;
+    nome: string;
+    cpf_cnpj?: string;
+  };
+  categoria?: string;
+  observacoes?: string;
+}

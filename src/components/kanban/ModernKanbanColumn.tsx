@@ -234,23 +234,15 @@ export default function ModernKanbanColumn({
     );
   }, [orders, activeFilterLabel]);
 
-  // Ordenar pedidos
+  // Ordenar pedidos - CORREÇÃO: Lógica simplificada para evitar conflitos
   const sortedOrders = useMemo(() => {
+    // CORREÇÃO: Sempre preservar a ordem durante qualquer operação de drag
+    // Isso evita que a lista "pule" durante o arrasto
+    if (activeId || manualOrderActive) {
+      return [...filteredOrders];
+    }
+    
     const ordersToSort = [...filteredOrders];
-    
-    // 🚫 PRESERVAR ordem original durante drag ativo (SEM setState)
-    if (activeId) {
-      console.log('🔒 Preservando ordem original durante drag:', { activeId, columnId });
-      // REMOVIDO: setManualOrderActive(true) - não alterar estado durante drag
-      return ordersToSort;
-    }
-    
-    // 🔄 Se houve reordenação manual recente, preservar ordem por mais tempo
-    if (manualOrderActive) {
-      console.log('🔒 Mantendo ordem manual após reordenação:', { columnId });
-      return ordersToSort;
-    }
-    
     return ordersToSort.sort((a, b) => {
       let comparison = 0;
       

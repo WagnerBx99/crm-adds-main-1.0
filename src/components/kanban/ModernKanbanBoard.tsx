@@ -790,7 +790,10 @@ export default function ModernKanbanBoard() {
     console.log('🔥 onDragEnd', result);
     const { destination, source, draggableId } = result;
     
-    // CLEANUP INSTANTÂNEO - SEMPRE EXECUTA PRIMEIRO (sem early returns)
+    // CORREÇÃO: Verificar isDragging ANTES do cleanup para evitar condição de corrida
+    const wasDragging = isDragging;
+    
+    // CLEANUP INSTANTÂNEO - SEMPRE EXECUTA
     setActiveId(null);
     setActiveOrder(null);
     setActiveContainer(null);
@@ -799,8 +802,9 @@ export default function ModernKanbanBoard() {
     setIsDragging(false);
     clearAutoScroll();
     
-    // Prevenção otimizada contra múltiplas execuções
-    if (!isDragging) {
+    // Prevenção otimizada contra múltiplas execuções (usando valor capturado)
+    if (!wasDragging) {
+      console.log('⚠️ handleDragEnd chamado mas não estava em drag');
       return;
     }
     
@@ -853,16 +857,14 @@ export default function ModernKanbanBoard() {
         destination.index
       );
       
-      // Dispatch APÓS Pangea DnD finalizar contexto interno
-      setTimeout(() => {
-        dispatch({
-          type: 'REORDER_ORDERS_IN_COLUMN',
-          payload: {
-            columnId: fromColumn.id,
-            newOrders: reorderResult.sourceOrders
-          }
-        });
-      }, 0);
+      // CORREÇÃO: Dispatch SÍNCRONO para evitar flicker visual
+      dispatch({
+        type: 'REORDER_ORDERS_IN_COLUMN',
+        payload: {
+          columnId: fromColumn.id,
+          newOrders: reorderResult.sourceOrders
+        }
+      });
       
       // Toast sem delay
       showReorderSuccess(
@@ -871,15 +873,14 @@ export default function ModernKanbanBoard() {
         () => {
           if (optimisticSnapshot) {
             const rollbackOrders = applyRollback(optimisticSnapshot);
-            setTimeout(() => {
-              dispatch({
-                type: 'REORDER_ORDERS_IN_COLUMN',
-                payload: {
-                  columnId: fromColumn.id,
-                  newOrders: rollbackOrders
-                }
-              });
-            }, 0);
+            // CORREÇÃO: Dispatch SÍNCRONO para rollback
+            dispatch({
+              type: 'REORDER_ORDERS_IN_COLUMN',
+              payload: {
+                columnId: fromColumn.id,
+                newOrders: rollbackOrders
+              }
+            });
           }
         }
       );
@@ -895,13 +896,11 @@ export default function ModernKanbanBoard() {
         return;
       }
 
-      // Dispatch APÓS Pangea DnD finalizar contexto interno
-      setTimeout(() => {
-        dispatch({
-          type: 'UPDATE_ORDER_STATUS',
-          payload: { orderId: draggableId, newStatus: toColumn.id }
-        });
-      }, 0);
+      // CORREÇÃO: Dispatch SÍNCRONO para evitar flicker visual
+      dispatch({
+        type: 'UPDATE_ORDER_STATUS',
+        payload: { orderId: draggableId, newStatus: toColumn.id }
+      });
       
       // Toast sem delay
       showMoveSuccess(

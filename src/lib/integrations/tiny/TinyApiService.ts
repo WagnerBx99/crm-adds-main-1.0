@@ -14,7 +14,12 @@ import {
   ItemPedido,
   FiltroNotaFiscal,
   NotaFiscal,
-  RespostaNotasFiscais
+  RespostaNotasFiscais,
+  FiltroContaPagar,
+  FiltroContaReceber,
+  ContaPagar,
+  ContaReceber,
+  ResumoFinanceiro
 } from '../../../types/tiny';
 import { CacheService } from './CacheService';
 import { TinyAuthService } from './TinyAuthService';
@@ -1565,5 +1570,372 @@ export class TinyApiService {
         url_rastreamento: raw.url_rastreamento || ''
       };
     });
+  }
+
+  // ============================================
+  // MÉTODOS FINANCEIROS - CONTAS A PAGAR
+  // ============================================
+
+  /**
+   * Busca contas a pagar com os filtros informados
+   * @param filtros Filtros de busca
+   * @param forceRefresh Forçar atualização ignorando cache
+   * @returns Lista de contas a pagar
+   */
+  async getContasPagar(
+    filtros?: FiltroContaPagar,
+    forceRefresh = false
+  ): Promise<ContaPagar[]> {
+    const cacheKey = `contas_pagar_${JSON.stringify(filtros || {})}`;
+    
+    console.log(`💰 [TinyAPI] Buscando contas a pagar com filtros:`, filtros);
+    
+    if (this.useCache && !forceRefresh) {
+      const cached = CacheService.getItem<ContaPagar[]>(cacheKey);
+      if (cached) {
+        console.log('📦 [TinyAPI] Usando contas a pagar em cache');
+        return cached;
+      }
+    }
+
+    try {
+      const parametros = this.formatarFiltrosContaPagar(filtros);
+      console.log(`📤 [TinyAPI] Parâmetros da requisição de contas a pagar:`, parametros);
+
+      const resp = await this.httpClientV2.get(
+        'contas.pagar.pesquisa.php',
+        { params: parametros }
+      );
+      
+      console.log(`📥 [TinyAPI] Resposta bruta da API de contas a pagar:`, resp.data);
+      
+      const r = resp.data.retorno;
+      if (r.status === 'Erro') {
+        const erro = r.erros?.[0]?.erro || 'Erro ao buscar contas a pagar';
+        console.error(`❌ [TinyAPI] Erro da API:`, erro);
+        throw new Error(erro);
+      }
+
+      let rawContas: any[] = [];
+      if (Array.isArray(r.contas)) {
+        rawContas = r.contas.map((x: any) => x.conta);
+      } else if (r.contas?.conta) {
+        const c = r.contas.conta;
+        rawContas = Array.isArray(c) ? c : [c];
+      }
+
+      const contasNormalizadas = this.normalizarContasPagar(rawContas);
+      
+      if (this.useCache && !forceRefresh) {
+        CacheService.setItem(cacheKey, contasNormalizadas, this.cacheExpiration);
+      }
+      
+      console.log(`✅ [TinyAPI] ${contasNormalizadas.length} contas a pagar processadas`);
+      return contasNormalizadas;
+      
+    } catch (error) {
+      console.error('❌ [TinyAPI] Erro ao buscar contas a pagar:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Formatar filtros para pesquisa de contas a pagar
+   */
+  private formatarFiltrosContaPagar(filtros?: FiltroContaPagar): Record<string, any> {
+    const params: Record<string, any> = {};
+    
+    if (!filtros) return params;
+    
+    if (filtros.dataInicial) params.dataInicial = filtros.dataInicial;
+    if (filtros.dataFinal) params.dataFinal = filtros.dataFinal;
+    if (filtros.dataVencimentoInicial) params.dataVencimentoInicial = filtros.dataVencimentoInicial;
+    if (filtros.dataVencimentoFinal) params.dataVencimentoFinal = filtros.dataVencimentoFinal;
+    if (filtros.situacao) params.situacao = filtros.situacao;
+    if (filtros.fornecedor) params.fornecedor = filtros.fornecedor;
+    if (filtros.numero) params.numero = filtros.numero;
+    if (filtros.pagina) params.pagina = filtros.pagina;
+    
+    return params;
+  }
+
+  /**
+   * Normaliza dados brutos de contas a pagar
+   */
+  private normalizarContasPagar(rawContas: any[]): ContaPagar[] {
+    const parseValor = this.createParseValor('ContaPagar');
+    
+    return rawContas.map((raw: any): ContaPagar => ({
+      id: raw.id?.toString() || '',
+      numero_documento: raw.numero_doc || raw.numero_documento || raw.numero || '',
+      data_emissao: raw.data_emissao || raw.dataEmissao || '',
+      data_vencimento: raw.data_vencimento || raw.dataVencimento || raw.vencimento || '',
+      data_pagamento: raw.data_pagamento || raw.dataPagamento || undefined,
+      valor: parseValor(raw.valor),
+      valor_pago: parseValor(raw.valor_pago || raw.valorPago || 0),
+      saldo: parseValor(raw.saldo || (raw.valor - (raw.valor_pago || 0))),
+      situacao: raw.situacao || 'aberto',
+      fornecedor: {
+        id: raw.id_fornecedor?.toString() || raw.fornecedor_id?.toString() || '',
+        nome: raw.nome_fornecedor || raw.fornecedor || '',
+        cpf_cnpj: raw.cpf_cnpj_fornecedor || ''
+      },
+      categoria: raw.categoria || raw.nome_categoria || '',
+      conta_bancaria: raw.conta_bancaria || raw.nome_conta || '',
+      forma_pagamento: raw.forma_pagamento || raw.formaPagamento || '',
+      observacoes: raw.observacoes || raw.obs || '',
+      historico: raw.historico || ''
+    }));
+  }
+
+  // ============================================
+  // MÉTODOS FINANCEIROS - CONTAS A RECEBER
+  // ============================================
+
+  /**
+   * Busca contas a receber com os filtros informados
+   * @param filtros Filtros de busca
+   * @param forceRefresh Forçar atualização ignorando cache
+   * @returns Lista de contas a receber
+   */
+  async getContasReceber(
+    filtros?: FiltroContaReceber,
+    forceRefresh = false
+  ): Promise<ContaReceber[]> {
+    const cacheKey = `contas_receber_${JSON.stringify(filtros || {})}`;
+    
+    console.log(`💵 [TinyAPI] Buscando contas a receber com filtros:`, filtros);
+    
+    if (this.useCache && !forceRefresh) {
+      const cached = CacheService.getItem<ContaReceber[]>(cacheKey);
+      if (cached) {
+        console.log('📦 [TinyAPI] Usando contas a receber em cache');
+        return cached;
+      }
+    }
+
+    try {
+      const parametros = this.formatarFiltrosContaReceber(filtros);
+      console.log(`📤 [TinyAPI] Parâmetros da requisição de contas a receber:`, parametros);
+
+      const resp = await this.httpClientV2.get(
+        'contas.receber.pesquisa.php',
+        { params: parametros }
+      );
+      
+      console.log(`📥 [TinyAPI] Resposta bruta da API de contas a receber:`, resp.data);
+      
+      const r = resp.data.retorno;
+      if (r.status === 'Erro') {
+        const erro = r.erros?.[0]?.erro || 'Erro ao buscar contas a receber';
+        console.error(`❌ [TinyAPI] Erro da API:`, erro);
+        throw new Error(erro);
+      }
+
+      let rawContas: any[] = [];
+      if (Array.isArray(r.contas)) {
+        rawContas = r.contas.map((x: any) => x.conta);
+      } else if (r.contas?.conta) {
+        const c = r.contas.conta;
+        rawContas = Array.isArray(c) ? c : [c];
+      }
+
+      const contasNormalizadas = this.normalizarContasReceber(rawContas);
+      
+      if (this.useCache && !forceRefresh) {
+        CacheService.setItem(cacheKey, contasNormalizadas, this.cacheExpiration);
+      }
+      
+      console.log(`✅ [TinyAPI] ${contasNormalizadas.length} contas a receber processadas`);
+      return contasNormalizadas;
+      
+    } catch (error) {
+      console.error('❌ [TinyAPI] Erro ao buscar contas a receber:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Formatar filtros para pesquisa de contas a receber
+   */
+  private formatarFiltrosContaReceber(filtros?: FiltroContaReceber): Record<string, any> {
+    const params: Record<string, any> = {};
+    
+    if (!filtros) return params;
+    
+    if (filtros.dataInicial) params.dataInicial = filtros.dataInicial;
+    if (filtros.dataFinal) params.dataFinal = filtros.dataFinal;
+    if (filtros.dataVencimentoInicial) params.dataVencimentoInicial = filtros.dataVencimentoInicial;
+    if (filtros.dataVencimentoFinal) params.dataVencimentoFinal = filtros.dataVencimentoFinal;
+    if (filtros.situacao) params.situacao = filtros.situacao;
+    if (filtros.cliente) params.cliente = filtros.cliente;
+    if (filtros.numero) params.numero = filtros.numero;
+    if (filtros.pagina) params.pagina = filtros.pagina;
+    
+    return params;
+  }
+
+  /**
+   * Normaliza dados brutos de contas a receber
+   */
+  private normalizarContasReceber(rawContas: any[]): ContaReceber[] {
+    const parseValor = this.createParseValor('ContaReceber');
+    
+    return rawContas.map((raw: any): ContaReceber => ({
+      id: raw.id?.toString() || '',
+      numero_documento: raw.numero_doc || raw.numero_documento || raw.numero || '',
+      data_emissao: raw.data_emissao || raw.dataEmissao || '',
+      data_vencimento: raw.data_vencimento || raw.dataVencimento || raw.vencimento || '',
+      data_recebimento: raw.data_recebimento || raw.dataRecebimento || undefined,
+      valor: parseValor(raw.valor),
+      valor_recebido: parseValor(raw.valor_recebido || raw.valorRecebido || 0),
+      saldo: parseValor(raw.saldo || (raw.valor - (raw.valor_recebido || 0))),
+      situacao: raw.situacao || 'aberto',
+      cliente: {
+        id: raw.id_cliente?.toString() || raw.cliente_id?.toString() || '',
+        nome: raw.nome_cliente || raw.cliente || '',
+        cpf_cnpj: raw.cpf_cnpj_cliente || ''
+      },
+      categoria: raw.categoria || raw.nome_categoria || '',
+      conta_bancaria: raw.conta_bancaria || raw.nome_conta || '',
+      forma_recebimento: raw.forma_recebimento || raw.formaRecebimento || '',
+      observacoes: raw.observacoes || raw.obs || '',
+      historico: raw.historico || '',
+      numero_pedido: raw.numero_pedido || raw.numeroPedido || '',
+      numero_nf: raw.numero_nf || raw.numeroNf || ''
+    }));
+  }
+
+  // ============================================
+  // MÉTODOS FINANCEIROS - RESUMO
+  // ============================================
+
+  /**
+   * Obtém resumo financeiro do período
+   * @param dataInicial Data inicial do período (dd/mm/yyyy)
+   * @param dataFinal Data final do período (dd/mm/yyyy)
+   * @returns Resumo financeiro consolidado
+   */
+  async getResumoFinanceiro(
+    dataInicial: string,
+    dataFinal: string
+  ): Promise<ResumoFinanceiro> {
+    console.log(`📊 [TinyAPI] Gerando resumo financeiro de ${dataInicial} a ${dataFinal}`);
+    
+    try {
+      // Buscar contas a pagar e receber em paralelo
+      const [contasPagar, contasReceber] = await Promise.all([
+        this.getContasPagar({ dataInicial, dataFinal }, true),
+        this.getContasReceber({ dataInicial, dataFinal }, true)
+      ]);
+
+      // Calcular totais de contas a pagar
+      const totalPagar = contasPagar.reduce((acc, c) => acc + c.valor, 0);
+      const pagoPagar = contasPagar.reduce((acc, c) => acc + c.valor_pago, 0);
+      const pendentePagar = contasPagar
+        .filter(c => c.situacao !== 'pago' && c.situacao !== 'cancelado')
+        .reduce((acc, c) => acc + c.saldo, 0);
+      const vencidoPagar = contasPagar
+        .filter(c => {
+          if (c.situacao === 'pago' || c.situacao === 'cancelado') return false;
+          const venc = this.parseDataBR(c.data_vencimento);
+          return venc && venc < new Date();
+        })
+        .reduce((acc, c) => acc + c.saldo, 0);
+
+      // Calcular totais de contas a receber
+      const totalReceber = contasReceber.reduce((acc, c) => acc + c.valor, 0);
+      const recebidoReceber = contasReceber.reduce((acc, c) => acc + c.valor_recebido, 0);
+      const pendenteReceber = contasReceber
+        .filter(c => c.situacao !== 'pago' && c.situacao !== 'cancelado')
+        .reduce((acc, c) => acc + c.saldo, 0);
+      const vencidoReceber = contasReceber
+        .filter(c => {
+          if (c.situacao === 'pago' || c.situacao === 'cancelado') return false;
+          const venc = this.parseDataBR(c.data_vencimento);
+          return venc && venc < new Date();
+        })
+        .reduce((acc, c) => acc + c.saldo, 0);
+
+      const resumo: ResumoFinanceiro = {
+        periodo: {
+          inicio: dataInicial,
+          fim: dataFinal
+        },
+        contas_pagar: {
+          total: totalPagar,
+          pago: pagoPagar,
+          pendente: pendentePagar,
+          vencido: vencidoPagar,
+          quantidade: contasPagar.length
+        },
+        contas_receber: {
+          total: totalReceber,
+          recebido: recebidoReceber,
+          pendente: pendenteReceber,
+          vencido: vencidoReceber,
+          quantidade: contasReceber.length
+        },
+        saldo: pendenteReceber - pendentePagar,
+        fluxo_caixa: {
+          entradas: recebidoReceber,
+          saidas: pagoPagar,
+          saldo: recebidoReceber - pagoPagar
+        }
+      };
+
+      console.log(`✅ [TinyAPI] Resumo financeiro gerado:`, resumo);
+      return resumo;
+      
+    } catch (error) {
+      console.error('❌ [TinyAPI] Erro ao gerar resumo financeiro:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Converte data no formato brasileiro (dd/mm/yyyy) para Date
+   */
+  private parseDataBR(dataStr: string): Date | null {
+    if (!dataStr) return null;
+    const partes = dataStr.split('/');
+    if (partes.length !== 3) return null;
+    const [dia, mes, ano] = partes.map(Number);
+    return new Date(ano, mes - 1, dia);
+  }
+
+  /**
+   * Cria função parseValor com contexto para logs
+   */
+  private createParseValor(contexto: string) {
+    return (val: any): number => {
+      if (val === undefined || val === null) return 0;
+      if (typeof val === 'number') return val;
+      
+      let strVal = String(val).trim();
+      if (!strVal) return 0;
+      
+      strVal = strVal.replace(/[R$\s]/g, '');
+      
+      // Se contém apenas dígitos (formato em centavos)
+      if (/^\d+$/.test(strVal)) {
+        return parseInt(strVal, 10) / 100;
+      }
+      
+      // Formato brasileiro (1.234,56)
+      if (strVal.includes(',')) {
+        strVal = strVal.replace(/\./g, '').replace(',', '.');
+        const resultado = parseFloat(strVal);
+        return isNaN(resultado) ? 0 : resultado;
+      }
+      
+      // Formato americano (1234.56)
+      if (/^\d+\.\d{1,2}$/.test(strVal)) {
+        return parseFloat(strVal);
+      }
+      
+      const num = parseFloat(strVal);
+      return isNaN(num) ? 0 : num;
+    };
   }
 } 
