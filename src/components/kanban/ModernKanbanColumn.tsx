@@ -99,36 +99,29 @@ function DraggableCardWrapper({
   showDropZoneBelow
 }: DraggableCardWrapperProps) {
   return (
-    <div className="relative" data-card-index={index}>
-      {/* Drop zone acima do card */}
-      <DropZoneIndicator isVisible={!!showDropZoneAbove} isTop={true} />
-      
-      <Draggable draggableId={order.id} index={index}>
-        {(provided, snapshot) => (
-          <div
-            ref={provided.innerRef}
-            {...provided.draggableProps}
-            {...provided.dragHandleProps}
-            className={cn(
-              "relative kanban-card",
-              snapshot.isDragging && "opacity-30", // Volta ao simples
-              "select-none touch-none",
-              "cursor-grab active:cursor-grabbing"
-            )}
-          >
-            <ModernKanbanCard
-              order={order}
-              onUpdateStatus={onUpdateStatus}
-              onUpdateOrder={onUpdateOrder}
-              activeFilterLabel={activeFilterLabel}
-            />
-          </div>
-        )}
-      </Draggable>
-      
-      {/* Drop zone abaixo do card */}
-      <DropZoneIndicator isVisible={!!showDropZoneBelow} />
-    </div>
+    <Draggable draggableId={order.id} index={index}>
+      {(provided, snapshot) => (
+        <div
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+          className={cn(
+            "relative kanban-card mb-2",
+            snapshot.isDragging && "opacity-50 shadow-lg",
+            "select-none touch-none",
+            "cursor-grab active:cursor-grabbing"
+          )}
+          data-card-index={index}
+        >
+          <ModernKanbanCard
+            order={order}
+            onUpdateStatus={onUpdateStatus}
+            onUpdateOrder={onUpdateOrder}
+            activeFilterLabel={activeFilterLabel}
+          />
+        </div>
+      )}
+    </Draggable>
   );
 }
 
@@ -387,7 +380,7 @@ export default function ModernKanbanColumn({
       <div 
         ref={droppableRef}
         {...droppableProps}
-        className="flex-1 p-3 relative"
+        className="flex-1 p-3 relative min-h-[150px] flex flex-col"
       >
         {isLoading ? (
           <div className="space-y-3">
@@ -396,60 +389,43 @@ export default function ModernKanbanColumn({
             ))}
           </div>
         ) : sortedOrders.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-text-low py-8">
-            <Package className="h-12 w-12 mb-3 opacity-30" />
-            <p className="text-sm font-medium">Nenhum pedido</p>
-            <p className="text-xs">Clique em + para adicionar</p>
-          </div>
+          <>
+            <div className="h-full flex flex-col items-center justify-center text-text-low py-8">
+              <Package className="h-12 w-12 mb-3 opacity-30" />
+              <p className="text-sm font-medium">Nenhum pedido</p>
+              <p className="text-xs">Clique em + para adicionar</p>
+            </div>
+            {placeholder}
+          </>
         ) : (
-          <div ref={cardsContainerRef} className="space-y-2">
-            {/* Drop zone no topo (quando está vazio ou para primeiro item) */}
-            {isDragOver && (
-              <DropZoneIndicator 
-                isVisible={!hoveredDropZone || (hoveredDropZone.cardIndex === 0 && hoveredDropZone.position === 'above')}
-                isTop={true}
-              />
-            )}
-            
+          <>
             {sortedOrders.map((order, index) => (
-              <div key={order.id}>
-                <DraggableCardWrapper
-                  order={order}
-                  onUpdateStatus={onUpdateStatus}
-                  onUpdateOrder={onUpdateOrder}
-                  activeFilterLabel={activeFilterLabel}
-                  index={index}
-                  isActive={activeId === order.id}
-                  isDragOver={isDragOver}
-                  showDropZoneAbove={
-                    isDragOver && 
-                    hoveredDropZone?.cardIndex === index && 
-                    hoveredDropZone?.position === 'above' &&
-                    activeId !== order.id
-                  }
-                  showDropZoneBelow={
-                    isDragOver && 
-                    hoveredDropZone?.cardIndex === index && 
-                    hoveredDropZone?.position === 'below' &&
-                    activeId !== order.id
-                  }
-                />
-              </div>
-            ))}
-            
-            {/* Drop zone no final */}
-            {isDragOver && (
-              <DropZoneIndicator 
-                isVisible={
-                  hoveredDropZone?.cardIndex === sortedOrders.length - 1 && 
-                  hoveredDropZone?.position === 'below'
+              <DraggableCardWrapper
+                key={order.id}
+                order={order}
+                onUpdateStatus={onUpdateStatus}
+                onUpdateOrder={onUpdateOrder}
+                activeFilterLabel={activeFilterLabel}
+                index={index}
+                isActive={activeId === order.id}
+                isDragOver={isDragOver}
+                showDropZoneAbove={
+                  isDragOver && 
+                  hoveredDropZone?.cardIndex === index && 
+                  hoveredDropZone?.position === 'above' &&
+                  activeId !== order.id
                 }
-                isTop={false}
+                showDropZoneBelow={
+                  isDragOver && 
+                  hoveredDropZone?.cardIndex === index && 
+                  hoveredDropZone?.position === 'below' &&
+                  activeId !== order.id
+                }
               />
-            )}
-          </div>
+            ))}
+            {placeholder}
+          </>
         )}
-        {placeholder}
       </div>
 
       {/* Footer com informações resumidas */}

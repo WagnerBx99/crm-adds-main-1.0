@@ -790,10 +790,7 @@ export default function ModernKanbanBoard() {
     console.log('🔥 onDragEnd', result);
     const { destination, source, draggableId } = result;
     
-    // CORREÇÃO: Verificar isDragging ANTES do cleanup para evitar condição de corrida
-    const wasDragging = isDragging;
-    
-    // CLEANUP INSTANTÂNEO - SEMPRE EXECUTA
+    // CLEANUP INSTANTÂNEO - SEMPRE EXECUTA (independente de qualquer estado)
     setActiveId(null);
     setActiveOrder(null);
     setActiveContainer(null);
@@ -801,12 +798,6 @@ export default function ModernKanbanBoard() {
     setOptimisticSnapshot(null);
     setIsDragging(false);
     clearAutoScroll();
-    
-    // Prevenção otimizada contra múltiplas execuções (usando valor capturado)
-    if (!wasDragging) {
-      console.log('⚠️ handleDragEnd chamado mas não estava em drag');
-      return;
-    }
     
     const now = performance.now();
     setLastDragEndTime(now);
@@ -924,12 +915,9 @@ export default function ModernKanbanBoard() {
     state.columns, 
     handleUpdateStatus, 
     dispatch, 
-    isDragging, 
-    lastDragEndTime,
     showMoveSuccess,
     showReorderSuccess,
     showError,
-    optimisticSnapshot,
     clearAutoScroll,
     statusNames
   ]);
@@ -1419,14 +1407,15 @@ export default function ModernKanbanBoard() {
                 ref={scrollContainerRef}
                 className={cn(
                   // Scroll horizontal responsivo
-                  "overflow-x-auto overflow-y-hidden",
+                  "overflow-x-auto overflow-y-visible",
                   // Container responsivo - garante que NUNCA ultrapasse o viewport
                   "w-full max-w-full min-h-[600px]",
                   // Animação suave
                   isScrolling ? "scroll-smooth" : "scroll-auto"
                 )}
                 style={{
-                  WebkitOverflowScrolling: 'touch'
+                  WebkitOverflowScrolling: 'touch',
+                  overflowY: 'visible'
                 }}
                 onScroll={() => {
                   setIsScrolling(true);

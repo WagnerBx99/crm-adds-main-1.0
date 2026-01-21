@@ -739,9 +739,9 @@ export default function ModernKanbanCard({
           "focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:ring-offset-1"
           // REMOVIDO: overflow-hidden - causava nested scroll container
         )}
-        onClick={handleCardClick}
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => setIsHovering(false)}
+        onDoubleClick={handleCardClick}
       >
         {/* Container principal ultra-compacto */}
         <div className="p-3 space-y-2.5">

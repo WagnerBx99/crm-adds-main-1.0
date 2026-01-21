@@ -232,3 +232,28 @@
   transition: none !important;
   animation: none !important;
 } 
+
+/* FIX CRÍTICO: Forçar overflow-y visible para permitir drag-and-drop */
+.overflow-x-auto.overflow-y-visible,
+.overflow-x-auto.overflow-y-hidden {
+  overflow-y: visible !important;
+}
+
+/* Garantir que o container de scroll horizontal não bloqueie o drag */
+[style*="WebkitOverflowScrolling"] {
+  overflow-y: visible !important;
+}
+
+/* Garantir que o item sendo arrastado esteja acima de tudo */
+[data-rbd-draggable-context-id] {
+  z-index: 9999 !important;
+}
+
+[data-rbd-drag-handle-draggable-id] {
+  z-index: 9999 !important;
+}
+
+/* Remover TODAS as transições durante drag */
+[data-rbd-draggable-id] {
+  transition: none !important;
+}
