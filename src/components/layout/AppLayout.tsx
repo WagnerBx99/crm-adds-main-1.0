@@ -102,7 +102,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         />
         
         {/* Área de conteúdo principal */}
-        <main className="flex-1 overflow-y-auto bg-surface-0 relative">
+        <main className="flex-1 overflow-visible bg-surface-0 relative">
           {/* Background pattern sutil */}
           <div className="absolute inset-0 bg-grid-slate-100/25 bg-[size:32px_32px] opacity-40 pointer-events-none" />
           
