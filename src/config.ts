@@ -22,17 +22,23 @@ const getEnvVariable = (key: string, defaultValue: string = ''): string => {
 // Identifica se está em ambiente de desenvolvimento
 const isDevelopment = getEnvVariable('VITE_APP_ENV', 'development') === 'development';
 
-// URL base da API (usando proxy em desenvolvimento)
-const baseApiUrl = isDevelopment ? '/api/tiny/' : 'https://api.tiny.com.br/api2/';
+// URL base da API Backend (PostgreSQL)
+export const API_BASE_URL = getEnvVariable('VITE_API_BASE_URL', 'http://31.97.253.85:3001/api');
+
+// URL base da API Tiny (usando proxy em desenvolvimento)
+const baseTinyApiUrl = isDevelopment ? '/api/tiny/' : 'https://api.tiny.com.br/api2/';
 
 // Configurações da API Tiny
 export const TINY_CONFIG = {
-  API_TOKEN: '8f45883a76440801fab9969236bad8a843393d693ab7ead62a2eced20859ca3a',
-  API_BASE_URL: baseApiUrl,
+  API_TOKEN: getEnvVariable('VITE_TINY_API_TOKEN', '8f45883a76440801fab9969236bad8a843393d693ab7ead62a2eced20859ca3a'),
+  API_BASE_URL: baseTinyApiUrl,
 };
 
 // Ambiente da aplicação
 export const APP_ENV = getEnvVariable('VITE_APP_ENV', 'development');
+
+// Flag para usar o backend PostgreSQL (true) ou localStorage (false)
+export const USE_BACKEND_API = getEnvVariable('VITE_USE_BACKEND_API', 'true') === 'true';
 
 // Flag para habilitar mocks durante o desenvolvimento
 export const USE_MOCK_API = false; // Desativando mocks para usar a API real
@@ -43,4 +49,4 @@ export const APP_CONFIG = {
   DEFAULT_PAGINATION_LIMIT: 10,
   DATE_FORMAT: 'dd/MM/yyyy',
   CURRENCY_FORMAT: 'pt-BR',
-}; 
+};

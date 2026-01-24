@@ -1,0 +1,584 @@
+// Schema Prisma para CRM ADDS
+// Banco de dados: PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum UserRole {
+  MASTER
+  GESTOR
+  PRESTADOR
+}
+
+enum OrderStatus {
+  FAZER
+  AJUSTE
+  APROVACAO
+  AGUARDANDO_APROVACAO
+  APROVADO
+  ARTE_APROVADA
+  PRODUCAO
+  EXPEDICAO
+  FINALIZADO
+  ENTREGUE
+  FATURADO
+  ARQUIVADO
+}
+
+enum OrderLabel {
+  BOLETO
+  AGUARDANDO_PAGAMENTO
+  PEDIDO_CANCELADO
+  APROV_AGUARDANDO_PAGAMENTO
+  AMOSTRAS
+  PAGO
+  ORCAMENTO_PUBLICO
+}
+
+enum OrderType {
+  ORCAMENTO_PUBLICO
+  INTERNO
+  PERSONALIZADO
+  RUSH
+  PROMOCIONAL
+  CORPORATIVO
+}
+
+enum Priority {
+  normal
+  high
+}
+
+enum PersonType {
+  FISICA
+  JURIDICA
+}
+
+enum AttachmentType {
+  image
+  pdf
+  document
+  other
+}
+
+enum ArtworkStatus {
+  pending
+  approved
+  adjustment_requested
+}
+
+enum ArtworkAction {
+  approved
+  adjustment_requested
+  comment_altered
+  artwork_uploaded
+}
+
+enum PerformerType {
+  internal_user
+  client
+}
+
+// ============================================
+// USUÁRIOS E AUTENTICAÇÃO
+// ============================================
+
+model User {
+  id              String    @id @default(uuid())
+  name            String
+  email           String    @unique
+  passwordHash    String
+  role            UserRole  @default(PRESTADOR)
+  active          Boolean   @default(true)
+  phone           String?
+  department      String?
+  avatar          String?
+  passwordResetAt DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  lastLogin       DateTime?
+  createdById     String?
+  createdBy       User?     @relation("UserCreatedBy", fields: [createdById], references: [id])
+  createdUsers    User[]    @relation("UserCreatedBy")
+
+  // Relações
+  orders          Order[]   @relation("OrderAssignedTo")
+  watchingOrders  Order[]   @relation("OrderWatchers")
+  historyEntries  HistoryEntry[]
+  attachments     Attachment[]
+  comments        Comment[]
+  auditLogs       AuditLog[]
+  artworkImages   ArtworkImage[]
+  artworkActionLogs ArtworkActionLog[]
+
+  @@map("users")
+}
+
+// ============================================
+// CLIENTES
+// ============================================
+
+model Customer {
+  id                  String     @id @default(uuid())
+  name                String
+  email               String?
+  phone               String?
+  company             String?
+  personType          PersonType @default(FISICA)
+  document            String?    // CPF ou CNPJ
+  zipCode             String?
+  city                String?
+  state               String?
+  address             String?
+  neighborhood        String?
+  number              String?
+  complement          String?
+  logo                String?
+  inscricaoEstadual   String?
+  inscricaoMunicipal  String?
+  nomeFantasia        String?
+  tinyId              String?    // ID do contato na Tiny
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  // Relações
+  orders              Order[]
+
+  @@map("customers")
+}
+
+// ============================================
+// PEDIDOS/ORDENS
+// ============================================
+
+model Order {
+  id                    String      @id @default(uuid())
+  title                 String
+  description           String?
+  status                OrderStatus @default(FAZER)
+  priority              Priority    @default(normal)
+  orderType             OrderType?
+  dueDate               DateTime?
+  startDate             DateTime?
+  artworkUrl            String?
+  approvalLink          String?
+  personalizationDetails String?
+  customerDetails       String?
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  // Relações
+  customerId            String
+  customer              Customer    @relation(fields: [customerId], references: [id])
+  
+  assignedToId          String?
+  assignedTo            User?       @relation("OrderAssignedTo", fields: [assignedToId], references: [id])
+  
+  watchers              User[]      @relation("OrderWatchers")
+  
+  history               HistoryEntry[]
+  checklists            Checklist[]
+  attachments           Attachment[]
+  comments              Comment[]
+  labels                OrderLabelRelation[]
+  products              OrderProduct[]
+  artworkImages         ArtworkImage[]
+  artworkComments       Comment[]   @relation("ArtworkComments")
+  finalizedArtworks     ArtworkImage[] @relation("FinalizedArtworks")
+  artworkApprovalTokens ArtworkApprovalToken[]
+  artworkActionLogs     ArtworkActionLog[]
+
+  @@map("orders")
+}
+
+// Relação muitos-para-muitos entre Order e Labels
+model OrderLabelRelation {
+  id        String     @id @default(uuid())
+  orderId   String
+  order     Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  label     OrderLabel
+  createdAt DateTime   @default(now())
+
+  @@unique([orderId, label])
+  @@map("order_labels")
+}
+
+// ============================================
+// HISTÓRICO DE PEDIDOS
+// ============================================
+
+model HistoryEntry {
+  id        String      @id @default(uuid())
+  status    OrderStatus
+  comment   String?
+  createdAt DateTime    @default(now())
+  
+  orderId   String
+  order     Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  userId    String
+  user      User        @relation(fields: [userId], references: [id])
+
+  @@map("history_entries")
+}
+
+// ============================================
+// CHECKLISTS
+// ============================================
+
+model Checklist {
+  id        String          @id @default(uuid())
+  title     String
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  
+  orderId   String
+  order     Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  items     ChecklistItem[]
+
+  @@map("checklists")
+}
+
+model ChecklistItem {
+  id          String    @id @default(uuid())
+  text        String
+  completed   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  checklistId String
+  checklist   Checklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+
+  @@map("checklist_items")
+}
+
+// ============================================
+// ANEXOS
+// ============================================
+
+model Attachment {
+  id          String         @id @default(uuid())
+  name        String
+  url         String
+  type        AttachmentType @default(other)
+  size        Int?
+  mimeType    String?
+  createdAt   DateTime       @default(now())
+  
+  orderId     String
+  order       Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  uploadedById String
+  uploadedBy   User          @relation(fields: [uploadedById], references: [id])
+
+  @@map("attachments")
+}
+
+// ============================================
+// COMENTÁRIOS
+// ============================================
+
+model Comment {
+  id        String   @id @default(uuid())
+  text      String
+  approved  Boolean?
+  altered   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  // Comentário de arte (opcional)
+  artworkOrderId String?
+  artworkOrder   Order?  @relation("ArtworkComments", fields: [artworkOrderId], references: [id])
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("comments")
+}
+
+// ============================================
+// PRODUTOS
+// ============================================
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  sku         String?  @unique
+  description String?
+  price       Decimal? @db.Decimal(10, 2)
+  imageUrl    String?
+  tinyId      String?  // ID do produto na Tiny
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relações
+  orderProducts OrderProduct[]
+
+  @@map("products")
+}
+
+// Relação muitos-para-muitos entre Order e Product
+model OrderProduct {
+  id        String   @id @default(uuid())
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+
+  @@unique([orderId, productId])
+  @@map("order_products")
+}
+
+// ============================================
+// ARTES E APROVAÇÕES
+// ============================================
+
+model ArtworkImage {
+  id          String        @id @default(uuid())
+  name        String
+  url         String
+  type        String?
+  status      ArtworkStatus @default(pending)
+  createdAt   DateTime      @default(now())
+  
+  orderId     String
+  order       Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  // Arte finalizada (opcional)
+  finalizedOrderId String?
+  finalizedOrder   Order?   @relation("FinalizedArtworks", fields: [finalizedOrderId], references: [id])
+  
+  uploadedById String
+  uploadedBy   User         @relation(fields: [uploadedById], references: [id])
+
+  // Relações
+  approvalTokens ArtworkApprovalToken[]
+
+  @@map("artwork_images")
+}
+
+model ArtworkApprovalToken {
+  id                String    @id @default(uuid())
+  token             String    @unique
+  expiresAt         DateTime
+  used              Boolean   @default(false)
+  usedAt            DateTime?
+  clientName        String?
+  clientDecision    String?   // 'approved' | 'adjustment_requested'
+  adjustmentComment String?
+  createdAt         DateTime  @default(now())
+  
+  orderId           String
+  order             Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  artworkId         String
+  artwork           ArtworkImage @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+
+  @@map("artwork_approval_tokens")
+}
+
+model ArtworkActionLog {
+  id            String        @id @default(uuid())
+  action        ArtworkAction
+  performedBy   String
+  performedByType PerformerType
+  details       String?
+  timestamp     DateTime      @default(now())
+  
+  orderId       String
+  order         Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  artworkId     String?
+  
+  userId        String?
+  user          User?         @relation(fields: [userId], references: [id])
+
+  @@map("artwork_action_logs")
+}
+
+// ============================================
+// ORÇAMENTOS PÚBLICOS
+// ============================================
+
+model PublicQuote {
+  id                String      @id @default(uuid())
+  customerName      String
+  customerEmail     String
+  customerPhone     String?
+  customerCompany   String?
+  description       String?
+  status            OrderStatus @default(FAZER)
+  priority          Priority    @default(normal)
+  convertedToOrder  Boolean     @default(false)
+  convertedOrderId  String?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  // Produtos do orçamento
+  products          PublicQuoteProduct[]
+
+  @@map("public_quotes")
+}
+
+model PublicQuoteProduct {
+  id          String      @id @default(uuid())
+  productId   String
+  productName String
+  quantity    Int         @default(1)
+  
+  quoteId     String
+  quote       PublicQuote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  @@map("public_quote_products")
+}
+
+// ============================================
+// CONTATOS PÚBLICOS
+// ============================================
+
+model PublicContact {
+  id                  String     @id @default(uuid())
+  nome                String
+  nomeFantasia        String?
+  tipoPessoa          PersonType @default(FISICA)
+  cpfCnpj             String
+  inscricaoEstadual   String?
+  inscricaoMunicipal  String?
+  fone                String
+  email               String
+  cep                 String
+  endereco            String
+  numero              String
+  complemento         String?
+  bairro              String
+  cidade              String
+  uf                  String
+  tinyId              String?    // ID do contato na Tiny
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  @@map("public_contacts")
+}
+
+// ============================================
+// ETIQUETAS PERSONALIZADAS
+// ============================================
+
+model Label {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  color       String   @default("#3b82f6")
+  description String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("labels")
+}
+
+// ============================================
+// LOGS DE AUDITORIA
+// ============================================
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  action      String
+  entityType  String
+  entityId    String?
+  details     String?
+  ipAddress   String?
+  userAgent   String?
+  timestamp   DateTime @default(now())
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([timestamp])
+  @@map("audit_logs")
+}
+
+// ============================================
+// CONFIGURAÇÕES DO SISTEMA
+// ============================================
+
+model SystemConfig {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("system_configs")
+}
+
+// ============================================
+// INTEGRAÇÕES (TINY, ETC)
+// ============================================
+
+model TinyIntegration {
+  id              String   @id @default(uuid())
+  accessToken     String?
+  refreshToken    String?
+  tokenExpiresAt  DateTime?
+  apiToken        String?
+  lastSyncAt      DateTime?
+  syncStatus      Json?    // Status de sincronização por entidade
+  config          Json?    // Configurações adicionais
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("tiny_integrations")
+}
+
+// ============================================
+// NOTIFICAÇÕES
+// ============================================
+
+model Notification {
+  id          String   @id @default(uuid())
+  type        String
+  title       String
+  message     String
+  read        Boolean  @default(false)
+  data        Json?
+  createdAt   DateTime @default(now())
+  
+  userId      String?
+
+  @@index([userId, read])
+  @@map("notifications")
+}
+
+model NotificationPreference {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  email       Boolean  @default(true)
+  push        Boolean  @default(true)
+  sms         Boolean  @default(false)
+  preferences Json?    // Preferências detalhadas por tipo de notificação
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("notification_preferences")
+}
