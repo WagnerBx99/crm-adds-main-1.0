@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { FinanceiroDashboard } from '@/components/dashboard/FinanceiroDashboard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -685,31 +686,9 @@ export default function Dashboard() {
             </div>
           </TabsContent>
 
-          {/* ABA FINANCEIRO */}
+          {/* ABA FINANCEIRO - INTEGRAÇÃO COM API TINY */}
           <TabsContent value="financeiro" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <MetricCard title="Margem Bruta" value="68.5%" change="+2.1%" trend="up" icon={DollarSign} description="Margem de lucro bruto" isLoading={loadingStates.financeiro} error={errors.financeiro} />
-              <MetricCard title="Margem Líquida" value="24.8%" change="+1.5%" trend="up" icon={TrendingUp} description="Margem de lucro líquido" isLoading={loadingStates.financeiro} error={errors.financeiro} />
-              <MetricCard title="Contas a Receber" value="R$ 185.450" change="+5.2%" trend="up" icon={Clock} description="Valores a receber" isLoading={loadingStates.financeiro} error={errors.financeiro} />
-              <MetricCard title="Contas a Pagar" value="R$ 98.250" change="-8.1%" trend="up" icon={AlertTriangle} description="Valores a pagar" isLoading={loadingStates.financeiro} error={errors.financeiro} />
-              <MetricCard title="Fluxo de Caixa" value="R$ 542.680" change="+18.5%" trend="up" icon={Activity} description="Saldo disponível" isLoading={loadingStates.financeiro} error={errors.financeiro} />
-              <MetricCard title="Saldos Consolidados" value="R$ 789.420" change="+12.3%" trend="up" icon={PieIcon} description="Todas as contas" isLoading={loadingStates.financeiro} error={errors.financeiro} />
-            </div>
-            
-            <div className="mt-8">
-              <h3 className="text-lg font-semibold text-text-high mb-4 flex items-center gap-2">
-                <DollarSign className="h-5 w-5 text-accent-primary" />
-                Saldos por Banco
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <MetricCard title="Banco do Brasil" value="R$ 245.680" change="+8.2%" trend="up" icon={DollarSign} description="Conta corrente" isLoading={loadingStates.financeiro} error={errors.financeiro} />
-                <MetricCard title="Cresol" value="R$ 128.450" change="+5.1%" trend="up" icon={DollarSign} description="Conta empresarial" isLoading={loadingStates.financeiro} error={errors.financeiro} />
-                <MetricCard title="Magalu Pay" value="R$ 89.230" change="+12.8%" trend="up" icon={DollarSign} description="Carteira digital" isLoading={loadingStates.financeiro} error={errors.financeiro} />
-                <MetricCard title="Olist" value="R$ 156.890" change="+15.5%" trend="up" icon={DollarSign} description="Marketplace" isLoading={loadingStates.financeiro} error={errors.financeiro} />
-                <MetricCard title="Unicred" value="R$ 98.670" change="+6.8%" trend="up" icon={DollarSign} description="Cooperativa" isLoading={loadingStates.financeiro} error={errors.financeiro} />
-                <MetricCard title="Pagar.me" value="R$ 70.500" change="+22.1%" trend="up" icon={DollarSign} description="Gateway pagamento" isLoading={loadingStates.financeiro} error={errors.financeiro} />
-              </div>
-            </div>
+            <FinanceiroDashboard />
           </TabsContent>
         </Tabs>
       </div>
