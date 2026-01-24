@@ -1,50 +1,32 @@
-/* 🎯 Animações Ultra-Suaves para Drag & Drop - VERSÃO MINIMALISTA */
+/* 🎯 Animações Ultra-Suaves para Drag & Drop - VERSÃO CORRIGIDA */
 
-/* Configuração base para performance - SEM DELAYS */
+/* Configuração base para performance - SEM transforms que conflitam com a biblioteca */
 .kanban-card {
-  will-change: transform;
-  /* Transições apenas para hover - NÃO para drag/drop */
+  /* REMOVIDO: will-change: transform - a biblioteca gerencia isso */
   transform-origin: center;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
+  /* REMOVIDO: backface-visibility: hidden - pode causar problemas de stacking */
 }
 
-/* IMPORTANTE: Desabilitar TODAS as transições durante e após drag */
-.kanban-card[data-rbd-drag-handle-draggable-id] {
-  transition: none !important;
-  animation: none !important;
-}
-
-/* SOLTURA INSTANTÂNEA - MÁXIMA PRIORIDADE */
-.kanban-card[data-rbd-drag-handle-draggable-id],
-.kanban-card[data-rbd-dragging],
-.kanban-card[style*="transform"],
-.kanban-card[data-react-beautiful-dnd-drag-handle] {
-  transition: none !important;
-  animation: none !important;
-  transition-delay: 0s !important;
-  animation-delay: 0s !important;
-}
+/* REMOVIDO: Regras que forçavam !important em seletores internos da biblioteca */
+/* A biblioteca @hello-pangea/dnd precisa de controle exclusivo sobre transforms */
 
 /* Estado de hover MUITO sutil - APENAS quando não está em drag */
 .kanban-card:hover:not([data-rbd-drag-handle-draggable-id]) {
-  transform: translateY(-1px) scale(1.01);
   box-shadow: 0 4px 12px -3px rgba(0, 0, 0, 0.08),
               0 2px 4px -2px rgba(0, 0, 0, 0.05);
-  transition: transform 150ms cubic-bezier(0.2, 0, 0, 1),
-              box-shadow 150ms cubic-bezier(0.2, 0, 0, 1);
+  transition: box-shadow 150ms cubic-bezier(0.2, 0, 0, 1);
 }
 
-/* Card sendo arrastado */
+/* Card sendo arrastado - SEM transforms que conflitam com a biblioteca */
 .kanban-card--dragging {
-  opacity: 0.7;
-  transform: rotate(5deg) scale(1.05);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25),
-              0 12px 20px -8px rgba(0, 0, 0, 0.15);
-  z-index: 9999;
-  transition: none; /* Remove transição durante drag */
+  opacity: 0.85;
+  /* REMOVIDO: transform: rotate(5deg) scale(1.05) - CONFLITA COM A BIBLIOTECA! */
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
+  z-index: 9999 !important;
   cursor: grabbing !important;
   border: 2px solid rgb(59, 130, 246);
+  /* Efeito visual alternativo sem usar transform */
+  filter: brightness(1.02);
 }
 
 /* Ghost placeholder */
@@ -54,7 +36,6 @@
     rgba(59, 130, 246, 0.1) 0%,
     rgba(147, 197, 253, 0.1) 100%);
   border: 2px dashed rgb(59, 130, 246);
-  transform: scale(0.98);
   transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -64,7 +45,6 @@
     rgba(59, 130, 246, 0.02) 0%,
     rgba(147, 197, 253, 0.02) 100%);
   border: 1px solid rgba(59, 130, 246, 0.2);
-  transform: scale(1.005);
   transition: all 200ms cubic-bezier(0.2, 0, 0, 1);
   box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.1);
 }
@@ -93,11 +73,9 @@
 @keyframes cardEnterMinimal {
   0% {
     opacity: 0;
-    transform: translateY(-4px) scale(0.99);
   }
   100% {
     opacity: 1;
-    transform: translateY(0) scale(1);
   }
 }
 
@@ -112,37 +90,27 @@
   border-radius: 2px;
   margin: 4px 0;
   opacity: 0;
-  transform: scaleX(0);
-  transform-origin: center;
-  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition: opacity 200ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .drop-zone-indicator--active {
   opacity: 1;
-  transform: scaleX(1);
   animation: pulse 1s infinite;
 }
 
 @keyframes pulse {
   0%, 100% {
     opacity: 1;
-    transform: scaleX(1);
   }
   50% {
     opacity: 0.7;
-    transform: scaleX(0.95);
   }
 }
 
 /* Otimizações para mobile */
 @media (max-width: 768px) {
   .kanban-card:hover:not([data-rbd-drag-handle-draggable-id]) {
-    transform: translateY(-0.5px) scale(1.005);
     transition-duration: 100ms;
-  }
-  
-  .kanban-column--drag-over {
-    transform: scale(1.002);
   }
 }
 
@@ -152,10 +120,6 @@
   .kanban-column--drag-over {
     transition: none !important;
     animation: none !important;
-  }
-  
-  .kanban-card:hover {
-    transform: none !important;
   }
 }
 
@@ -191,7 +155,7 @@
   opacity: 1;
 }
 
-/* Performance optimizations */
+/* Performance optimizations - sem forçar transforms */
 .kanban-board {
   contain: layout style paint;
 }
@@ -200,60 +164,13 @@
   contain: layout style;
 }
 
-.kanban-card {
-  contain: layout style paint;
-}
-
-/* GPU acceleration for smooth animations */
-.kanban-card,
-.kanban-column {
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-}
-
 /* Card overlay INSTANTÂNEO */
 .kanban-card-drag-overlay-instantaneous {
-  will-change: transform;
   pointer-events: none;
   z-index: 9999;
-  /* SEM animação de aparecimento para ser instantâneo */
-  transition: none !important;
-  animation: none !important;
-}
-
-/* Drop zone indicators ultra-precisos */
-.drop-zone-indicator {
-  will-change: transform, opacity;
-  transition: all 150ms cubic-bezier(0.2, 0, 0, 1);
-}
-
-/* OVERRIDE GLOBAL - Garante que cards nunca tenham delay */
-[data-rbd-drag-handle-draggable-id] * {
-  transition: none !important;
-  animation: none !important;
-} 
-
-/* FIX CRÍTICO: Forçar overflow-y visible para permitir drag-and-drop */
-.overflow-x-auto.overflow-y-visible,
-.overflow-x-auto.overflow-y-hidden {
-  overflow-y: visible !important;
-}
-
-/* Garantir que o container de scroll horizontal não bloqueie o drag */
-[style*="WebkitOverflowScrolling"] {
-  overflow-y: visible !important;
 }
 
 /* Garantir que o item sendo arrastado esteja acima de tudo */
 [data-rbd-draggable-context-id] {
   z-index: 9999 !important;
-}
-
-[data-rbd-drag-handle-draggable-id] {
-  z-index: 9999 !important;
-}
-
-/* Remover TODAS as transições durante drag */
-[data-rbd-draggable-id] {
-  transition: none !important;
 }

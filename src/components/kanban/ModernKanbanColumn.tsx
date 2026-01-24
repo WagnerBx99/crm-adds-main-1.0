@@ -99,7 +99,7 @@ function DraggableCardWrapper({
   showDropZoneBelow
 }: DraggableCardWrapperProps) {
   return (
-    <Draggable draggableId={order.id} index={index}>
+    <Draggable draggableId={String(order.id)} index={index}>
       {(provided, snapshot) => (
         <div
           ref={provided.innerRef}
@@ -107,10 +107,10 @@ function DraggableCardWrapper({
           {...provided.dragHandleProps}
           className={cn(
             "relative kanban-card mb-2",
-            snapshot.isDragging && "opacity-50 shadow-lg",
-            "select-none touch-none",
-            "cursor-grab active:cursor-grabbing"
+            snapshot.isDragging && "kanban-card--dragging",
+            "select-none"
           )}
+          style={provided.draggableProps.style}
           data-card-index={index}
         >
           <ModernKanbanCard
