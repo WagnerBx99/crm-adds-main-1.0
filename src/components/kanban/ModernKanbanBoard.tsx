@@ -1406,16 +1406,15 @@ export default function ModernKanbanBoard() {
               <div 
                 ref={scrollContainerRef}
                 className={cn(
-                  // Scroll horizontal responsivo
-                  "overflow-x-auto overflow-y-visible",
+                  // Scroll horizontal responsivo - SEM overflow-y para evitar nested scroll
+                  "overflow-x-auto",
                   // Container responsivo - garante que NUNCA ultrapasse o viewport
-                  "w-full max-w-full min-h-[600px]",
-                  // Animação suave
-                  isScrolling ? "scroll-smooth" : "scroll-auto"
+                  "w-full max-w-full min-h-[600px]"
                 )}
                 style={{
                   WebkitOverflowScrolling: 'touch',
-                  overflowY: 'visible'
+                  overflowY: 'visible',
+                  scrollBehavior: isScrolling ? 'smooth' : 'auto'
                 }}
                 onScroll={() => {
                   setIsScrolling(true);
