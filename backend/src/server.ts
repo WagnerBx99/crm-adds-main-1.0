@@ -17,6 +17,9 @@ import configRoutes from './routes/config.js';
 import tinyRoutes from './routes/tiny.js';
 import artApprovalRoutes from './routes/artApproval.js';
 
+// Importar middlewares
+import { rateLimiters, globalRateLimiter, getRateLimiterStats } from './middlewares/rateLimiter.js';
+
 // Carregar variáveis de ambiente
 dotenv.config();
 
@@ -26,7 +29,7 @@ export const prisma = new PrismaClient();
 // Criar aplicação Express
 const app = express();
 
-// Middlewares
+// Middlewares globais
 app.use(cors({
   origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
   credentials: true
@@ -34,10 +37,13 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Trust proxy para obter IP real atrás de Nginx/Load Balancer
+app.set('trust proxy', 1);
+
 // Servir arquivos estáticos de uploads
 app.use('/uploads', express.static(process.env.UPLOAD_DIR || './uploads'));
 
-// Rotas de health check
+// Rotas de health check (sem rate limiting)
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
@@ -59,19 +65,51 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
-// Rotas da API
+// Endpoint de estatísticas do rate limiter (apenas para admins)
+app.get('/api/rate-limit-stats', (req, res) => {
+  // Verificar se é uma requisição interna ou de admin
+  const adminKey = req.headers['x-admin-key'];
+  if (adminKey !== process.env.ADMIN_API_KEY && process.env.NODE_ENV === 'production') {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  
+  res.json(getRateLimiterStats());
+});
+
+// ============================================
+// ROTAS COM RATE LIMITING ESPECÍFICO
+// ============================================
+
+// Autenticação - rate limiting restritivo para prevenir força bruta
+app.use('/api/auth/login', rateLimiters.authLogin);
 app.use('/api/auth', authRoutes);
+
+// Aprovação de arte pública - rate limiting para links públicos
+app.use('/api/art-approval/public', rateLimiters.artApprovalPublic);
+app.use('/api/art-approval', artApprovalRoutes);
+
+// Orçamentos públicos - rate limiting moderado
+app.use('/api/public-quotes', rateLimiters.publicQuotes, publicQuoteRoutes);
+
+// Contatos públicos - rate limiting moderado
+app.use('/api/public-contacts', rateLimiters.publicContacts, publicContactRoutes);
+
+// ============================================
+// ROTAS COM RATE LIMITING GERAL
+// ============================================
+
+// Aplicar rate limiting geral para todas as outras rotas da API
+app.use('/api', globalRateLimiter);
+
+// Rotas protegidas (requerem autenticação)
 app.use('/api/users', userRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/products', productRoutes);
-app.use('/api/public-quotes', publicQuoteRoutes);
-app.use('/api/public-contacts', publicContactRoutes);
 app.use('/api/labels', labelRoutes);
 app.use('/api/audit-logs', auditLogRoutes);
 app.use('/api/config', configRoutes);
 app.use('/api/tiny', tinyRoutes);
-app.use('/api/art-approval', artApprovalRoutes);
 
 // Middleware de erro global
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -116,6 +154,7 @@ async function main() {
       console.log(`🚀 Servidor rodando na porta ${PORT}`);
       console.log(`📍 API disponível em http://localhost:${PORT}/api`);
       console.log(`🔧 Ambiente: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`🛡️ Rate limiting ativado`);
     });
   } catch (error) {
     console.error('❌ Erro ao iniciar servidor:', error);
