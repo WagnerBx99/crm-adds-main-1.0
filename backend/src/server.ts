@@ -20,6 +20,9 @@ import artApprovalRoutes from './routes/artApproval.js';
 // Importar middlewares
 import { rateLimiters, globalRateLimiter, getRateLimiterStats } from './middlewares/rateLimiter.js';
 
+// Importar Swagger
+import { setupSwagger } from './swagger.js';
+
 // Carregar variáveis de ambiente
 dotenv.config();
 
@@ -39,6 +42,9 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Trust proxy para obter IP real atrás de Nginx/Load Balancer
 app.set('trust proxy', 1);
+
+// Configurar Swagger (documentação da API)
+setupSwagger(app);
 
 // Servir arquivos estáticos de uploads
 app.use('/uploads', express.static(process.env.UPLOAD_DIR || './uploads'));
@@ -153,6 +159,7 @@ async function main() {
     app.listen(PORT, () => {
       console.log(`🚀 Servidor rodando na porta ${PORT}`);
       console.log(`📍 API disponível em http://localhost:${PORT}/api`);
+      console.log(`📚 Documentação disponível em http://localhost:${PORT}/api/docs`);
       console.log(`🔧 Ambiente: ${process.env.NODE_ENV || 'development'}`);
       console.log(`🛡️ Rate limiting ativado`);
     });
