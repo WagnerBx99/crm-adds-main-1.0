@@ -358,6 +358,7 @@ model ArtworkImage {
   url         String
   type        String?
   status      ArtworkStatus @default(pending)
+  version     Int           @default(1)
   createdAt   DateTime      @default(now())
   
   orderId     String
@@ -369,6 +370,17 @@ model ArtworkImage {
   
   uploadedById String
   uploadedBy   User         @relation(fields: [uploadedById], references: [id])
+  
+  // Versionamento
+  previousVersionId String?
+  previousVersion   ArtworkImage?  @relation("ArtworkVersions", fields: [previousVersionId], references: [id])
+  nextVersions      ArtworkImage[] @relation("ArtworkVersions")
+  
+  // Aprovação
+  approvedAt    DateTime?
+  approvedBy    String?
+  replacedAt    DateTime?
+  replacedById  String?
 
   // Relações
   approvalTokens ArtworkApprovalToken[]
@@ -384,8 +396,10 @@ model ArtworkApprovalToken {
   usedAt            DateTime?
   clientName        String?
   clientDecision    String?   // 'approved' | 'adjustment_requested'
+  clientFeedback    String?
   adjustmentComment String?
   createdAt         DateTime  @default(now())
+  createdById       String?
   
   orderId           String
   order             Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)

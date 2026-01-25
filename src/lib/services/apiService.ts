@@ -167,13 +167,19 @@ class ApiService {
   /**
    * GET request
    */
-  async get<T>(endpoint: string, params?: Record<string, string>): Promise<T> {
+  async get<T>(endpoint: string, paramsOrAuth?: Record<string, string> | boolean, includeAuth: boolean = true): Promise<T> {
     let url = endpoint;
-    if (params) {
-      const searchParams = new URLSearchParams(params);
+    let auth = includeAuth;
+    
+    // Se o segundo parâmetro for boolean, é o includeAuth
+    if (typeof paramsOrAuth === 'boolean') {
+      auth = paramsOrAuth;
+    } else if (paramsOrAuth) {
+      const searchParams = new URLSearchParams(paramsOrAuth);
       url = `${endpoint}?${searchParams.toString()}`;
     }
-    return this.request<T>(url, { method: 'GET' });
+    
+    return this.request<T>(url, { method: 'GET' }, auth);
   }
 
   /**

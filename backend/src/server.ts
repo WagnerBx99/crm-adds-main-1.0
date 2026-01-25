@@ -15,6 +15,7 @@ import labelRoutes from './routes/labels.js';
 import auditLogRoutes from './routes/auditLogs.js';
 import configRoutes from './routes/config.js';
 import tinyRoutes from './routes/tiny.js';
+import artApprovalRoutes from './routes/artApproval.js';
 
 // Carregar variáveis de ambiente
 dotenv.config();
@@ -70,6 +71,7 @@ app.use('/api/labels', labelRoutes);
 app.use('/api/audit-logs', auditLogRoutes);
 app.use('/api/config', configRoutes);
 app.use('/api/tiny', tinyRoutes);
+app.use('/api/art-approval', artApprovalRoutes);
 
 // Middleware de erro global
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
