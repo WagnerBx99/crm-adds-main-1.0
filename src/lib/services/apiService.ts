@@ -9,8 +9,9 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://31.97.253.85:3001/api';
 
 // Chave para armazenar o token no localStorage
-const TOKEN_KEY = 'crm_adds_token';
-const USER_KEY = 'crm_adds_user';
+// Usando as mesmas chaves do authService para compatibilidade
+const TOKEN_KEY = 'authTokens';
+const USER_KEY = 'currentUser';
 
 /**
  * Interface para resposta de erro da API
@@ -62,14 +63,28 @@ class ApiService {
    * Obtém o token de autenticação armazenado
    */
   getToken(): string | null {
-    return localStorage.getItem(TOKEN_KEY);
+    const authTokens = localStorage.getItem(TOKEN_KEY);
+    if (authTokens) {
+      try {
+        const parsed = JSON.parse(authTokens);
+        return parsed.accessToken || null;
+      } catch {
+        return null;
+      }
+    }
+    return null;
   }
 
   /**
    * Armazena o token de autenticação
    */
   setToken(token: string): void {
-    localStorage.setItem(TOKEN_KEY, token);
+    const authTokens = {
+      accessToken: token,
+      refreshToken: '',
+      expiresAt: Date.now() + 24 * 60 * 60 * 1000 // 24 horas
+    };
+    localStorage.setItem(TOKEN_KEY, JSON.stringify(authTokens));
   }
 
   /**
