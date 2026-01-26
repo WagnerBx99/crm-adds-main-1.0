@@ -1,14 +1,6 @@
 import { createContext, useContext, useReducer, ReactNode, useEffect, useCallback } from 'react';
 import { Order, Status, KanbanColumn, Priority } from '@/types';
-import { 
-  kanbanColumns as initialColumns,
-  orders as initialOrders,
-  addOrder,
-  updateOrderStatus,
-  addOrderComment,
-  updateOrder,
-  mockOrders
-} from '@/lib/data';
+import { kanbanColumns as initialColumns } from '@/lib/data';
 import { toast } from 'sonner';
 import { apiService } from '@/lib/services/apiService';
 
@@ -18,7 +10,7 @@ interface KanbanState {
   orders: Order[];
   isLoading: boolean;
   lastSyncTime: Date | null;
-  useBackendApi: boolean;
+  error: string | null;
 }
 
 type KanbanAction = 
@@ -30,26 +22,25 @@ type KanbanAction =
   | { type: 'UPDATE_ORDER'; payload: { orderId: string; updatedData: Partial<Order> } }
   | { type: 'REORDER_ORDERS_IN_COLUMN'; payload: { columnId: Status; newOrders: Order[] } }
   | { type: 'SET_LOADING'; payload: boolean }
-  | { type: 'SET_USE_BACKEND_API'; payload: boolean }
-  | { type: 'SYNC_FROM_STORAGE' };
+  | { type: 'SET_ERROR'; payload: string | null };
 
 interface KanbanContextType {
   state: KanbanState;
   dispatch: React.Dispatch<KanbanAction>;
   addPublicOrder: (orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt' | 'history'>) => Promise<Order>;
-  refreshFromStorage: () => void;
   refreshFromApi: () => Promise<void>;
   getOrderById: (id: string) => Order | undefined;
+  updateOrderStatusApi: (orderId: string, newStatus: Status, comment?: string) => Promise<void>;
 }
 
 // Função auxiliar para mapear pedidos da API para o formato do frontend
 function mapApiOrderToFrontend(apiOrder: any): Order {
   return {
     id: apiOrder.id,
-    title: apiOrder.title,
+    title: apiOrder.title || 'Sem título',
     description: apiOrder.description || '',
     status: apiOrder.status as Status,
-    priority: (apiOrder.priority || 'NORMAL') as Priority,
+    priority: (apiOrder.priority || 'normal') as Priority,
     customer: apiOrder.customer ? {
       id: apiOrder.customer.id,
       name: apiOrder.customer.name,
@@ -121,7 +112,8 @@ function kanbanReducer(state: KanbanState, action: KanbanAction): KanbanState {
         ...state,
         orders,
         columns: updatedColumns,
-        lastSyncTime: new Date()
+        lastSyncTime: new Date(),
+        error: null
       };
     }
       
@@ -137,14 +129,6 @@ function kanbanReducer(state: KanbanState, action: KanbanAction): KanbanState {
         }
         return column;
       });
-      
-      // 💾 Salvar automaticamente no localStorage como backup
-      try {
-        localStorage.setItem('orders', JSON.stringify(updatedOrders));
-        console.log('💾 Pedidos salvos no localStorage após ADD_ORDER');
-      } catch (error) {
-        console.error('❌ Erro ao salvar pedidos no localStorage:', error);
-      }
       
       return {
         ...state,
@@ -182,14 +166,6 @@ function kanbanReducer(state: KanbanState, action: KanbanAction): KanbanState {
         orders: updatedOrders.filter(order => order.status === column.id)
       }));
       
-      // 💾 Salvar automaticamente no localStorage
-      try {
-        localStorage.setItem('orders', JSON.stringify(updatedOrders));
-        console.log('💾 Pedidos salvos no localStorage após UPDATE_ORDER_STATUS');
-      } catch (error) {
-        console.error('❌ Erro ao salvar pedidos no localStorage:', error);
-      }
-      
       return {
         ...state,
         orders: updatedOrders,
@@ -224,14 +200,6 @@ function kanbanReducer(state: KanbanState, action: KanbanAction): KanbanState {
         orders: updatedOrders.filter(order => order.status === column.id)
       }));
       
-      // 💾 Salvar automaticamente no localStorage
-      try {
-        localStorage.setItem('orders', JSON.stringify(updatedOrders));
-        console.log('💾 Pedidos salvos no localStorage após ADD_COMMENT');
-      } catch (error) {
-        console.error('❌ Erro ao salvar pedidos no localStorage:', error);
-      }
-      
       return {
         ...state,
         orders: updatedOrders,
@@ -258,14 +226,6 @@ function kanbanReducer(state: KanbanState, action: KanbanAction): KanbanState {
         orders: updatedOrders.filter(order => order.status === column.id)
       }));
       
-      // 💾 Salvar automaticamente no localStorage
-      try {
-        localStorage.setItem('orders', JSON.stringify(updatedOrders));
-        console.log('💾 Pedidos salvos no localStorage após UPDATE_ORDER');
-      } catch (error) {
-        console.error('❌ Erro ao salvar pedidos no localStorage:', error);
-      }
-      
       return {
         ...state,
         orders: updatedOrders,
@@ -279,24 +239,15 @@ function kanbanReducer(state: KanbanState, action: KanbanAction): KanbanState {
       
       console.log('🔧 REORDER_ORDERS_IN_COLUMN iniciado:', {
         columnId,
-        newOrdersCount: newOrders.length,
-        newOrderTitles: newOrders.map(o => o.title),
-        currentOrdersInColumn: state.orders.filter(order => order.status === columnId).map(o => o.title)
+        newOrdersCount: newOrders.length
       });
       
       // Atualizar a ordem dos pedidos apenas na coluna específica
       const ordersInOtherColumns = state.orders.filter(order => order.status !== columnId);
       const allUpdatedOrders = [...ordersInOtherColumns, ...newOrders];
       
-      console.log('📝 Ordens atualizadas:', {
-        ordersInOtherColumns: ordersInOtherColumns.length,
-        newOrders: newOrders.length,
-        totalAfterUpdate: allUpdatedOrders.length
-      });
-      
       const updatedColumns = state.columns.map(column => {
         if (column.id === columnId) {
-          console.log(`✏️  Atualizando coluna ${columnId} com ${newOrders.length} pedidos`);
           return {
             ...column,
             orders: newOrders
@@ -308,16 +259,6 @@ function kanbanReducer(state: KanbanState, action: KanbanAction): KanbanState {
           orders: filteredOrders
         };
       });
-      
-      // 💾 Salvar automaticamente no localStorage
-      try {
-        localStorage.setItem('orders', JSON.stringify(allUpdatedOrders));
-        console.log('💾 Pedidos salvos no localStorage após REORDER_ORDERS_IN_COLUMN');
-      } catch (error) {
-        console.error('❌ Erro ao salvar pedidos no localStorage:', error);
-      }
-      
-      console.log('✅ REORDER_ORDERS_IN_COLUMN concluído');
       
       return {
         ...state,
@@ -333,48 +274,11 @@ function kanbanReducer(state: KanbanState, action: KanbanAction): KanbanState {
         isLoading: action.payload
       };
     
-    case 'SET_USE_BACKEND_API':
+    case 'SET_ERROR':
       return {
         ...state,
-        useBackendApi: action.payload
+        error: action.payload
       };
-      
-    case 'SYNC_FROM_STORAGE': {
-      try {
-        console.log('🔄 [SYNC SIMPLIFICADA] Verificando localStorage...');
-        
-        // Carregar dados do localStorage
-        let ordersData = JSON.parse(localStorage.getItem('orders') || '[]');
-        
-        // Se não há dados no localStorage, usar dados mock e salvá-los
-        if (ordersData.length === 0) {
-          console.log('📦 [SYNC] Nenhum dado encontrado no localStorage, carregando dados mock...');
-          ordersData = mockOrders;
-          localStorage.setItem('orders', JSON.stringify(mockOrders));
-          console.log(`📦 [SYNC] ${mockOrders.length} pedidos mock carregados e salvos no localStorage`);
-        } else {
-          console.log(`📊 [SYNC] ${ordersData.length} pedidos encontrados no localStorage`);
-        }
-        
-        // Atualizar colunas com pedidos filtrados por status
-        const updatedColumns = state.columns.map(column => ({
-          ...column,
-          orders: ordersData.filter((order: any) => order.status === column.id)
-        }));
-        
-        console.log('✅ [SYNC SIMPLIFICADA] Sincronização concluída');
-        
-        return {
-          ...state,
-          orders: ordersData,
-          columns: updatedColumns,
-          lastSyncTime: new Date()
-        };
-      } catch (error) {
-        console.error('❌ Erro na sincronização:', error);
-        return state;
-      }
-    }
     
     default:
       return state;
@@ -401,105 +305,122 @@ interface KanbanProviderProps {
 export function KanbanProvider({ children }: KanbanProviderProps) {
   const [state, dispatch] = useReducer(kanbanReducer, {
     columns: initialColumns,
-    orders: initialOrders,
-    isLoading: false,
+    orders: [],
+    isLoading: true,
     lastSyncTime: null,
-    useBackendApi: import.meta.env.VITE_USE_BACKEND_API === 'true'
+    error: null
   });
   
   // Função para buscar pedidos da API
   const refreshFromApi = useCallback(async () => {
-    if (!apiService.isAuthenticated()) {
-      console.log('🔒 [API] Usuário não autenticado, usando localStorage');
-      dispatch({ type: 'SYNC_FROM_STORAGE' });
-      return;
-    }
-    
     dispatch({ type: 'SET_LOADING', payload: true });
+    dispatch({ type: 'SET_ERROR', payload: null });
     
     try {
       console.log('🌐 [API] Buscando pedidos do backend...');
       const apiOrders = await apiService.getOrdersKanban();
       
-      if (apiOrders && apiOrders.length > 0) {
+      if (apiOrders && Array.isArray(apiOrders)) {
         console.log(`✅ [API] ${apiOrders.length} pedidos recebidos do backend`);
         const mappedOrders = apiOrders.map(mapApiOrderToFrontend);
         dispatch({ type: 'SET_ORDERS', payload: mappedOrders });
-        dispatch({ type: 'SET_USE_BACKEND_API', payload: true });
-        
-        // Salvar no localStorage como backup
-        localStorage.setItem('orders', JSON.stringify(mappedOrders));
       } else {
-        console.log('📦 [API] Nenhum pedido no backend, usando localStorage');
-        dispatch({ type: 'SYNC_FROM_STORAGE' });
+        console.log('⚠️ [API] Nenhum pedido encontrado no backend');
+        dispatch({ type: 'SET_ORDERS', payload: [] });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ [API] Erro ao buscar pedidos:', error);
-      console.log('📦 [API] Fallback para localStorage');
-      dispatch({ type: 'SYNC_FROM_STORAGE' });
-      dispatch({ type: 'SET_USE_BACKEND_API', payload: false });
+      const errorMessage = error.message || 'Erro ao conectar com o servidor';
+      dispatch({ type: 'SET_ERROR', payload: errorMessage });
+      
+      // Mostrar toast de erro apenas se não for erro de autenticação
+      if (!errorMessage.includes('Sessão expirada')) {
+        toast.error('Erro ao carregar pedidos', {
+          description: errorMessage,
+          duration: 5000,
+        });
+      }
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
   }, []);
   
-  // Sincronização inicial - tenta API primeiro, depois localStorage
-  useEffect(() => {
-    const initializeData = async () => {
-      if (state.useBackendApi && apiService.isAuthenticated()) {
-        await refreshFromApi();
-      } else {
-        dispatch({ type: 'SYNC_FROM_STORAGE' });
-      }
-    };
-    
-    initializeData();
-  }, []);
+  // Função para atualizar status via API
+  const updateOrderStatusApi = useCallback(async (orderId: string, newStatus: Status, comment?: string) => {
+    try {
+      console.log(`🔄 [API] Atualizando status do pedido ${orderId} para ${newStatus}`);
+      await apiService.updateOrderStatus(orderId, newStatus, comment);
+      
+      // Atualizar estado local
+      dispatch({ type: 'UPDATE_ORDER_STATUS', payload: { orderId, newStatus } });
+      
+      toast.success('Status atualizado', {
+        description: `Pedido movido para ${newStatus}`,
+        duration: 3000,
+      });
+    } catch (error: any) {
+      console.error('❌ [API] Erro ao atualizar status:', error);
+      toast.error('Erro ao atualizar status', {
+        description: error.message || 'Não foi possível atualizar o status',
+        duration: 5000,
+      });
+      
+      // Recarregar dados para sincronizar com o backend
+      await refreshFromApi();
+    }
+  }, [refreshFromApi]);
   
-  // Função para adicionar pedido de orçamento público
+  // Sincronização inicial - busca da API
+  useEffect(() => {
+    // Verificar se o usuário está autenticado antes de buscar
+    if (apiService.isAuthenticated()) {
+      refreshFromApi();
+    } else {
+      dispatch({ type: 'SET_LOADING', payload: false });
+      dispatch({ type: 'SET_ERROR', payload: 'Usuário não autenticado' });
+    }
+  }, [refreshFromApi]);
+  
+  // Função para adicionar pedido via API
   const addPublicOrder = async (orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt' | 'history'>): Promise<Order> => {
     dispatch({ type: 'SET_LOADING', payload: true });
     
     try {
-      const newOrder: Order = {
-        id: `public-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        history: [{
-          id: `history-${Date.now()}`,
-          date: new Date(),
-          status: orderData.status,
-          user: 'Sistema',
-          comment: 'Pedido criado via interface pública'
-        }],
-        ...orderData
-      };
+      console.log('🌐 [API] Criando novo pedido...');
+      
+      // Criar pedido via API
+      const apiOrder = await apiService.createOrder({
+        title: orderData.title,
+        description: orderData.description,
+        status: orderData.status,
+        priority: orderData.priority,
+        customerId: orderData.customer?.id,
+        products: orderData.products,
+        labels: orderData.labels,
+        dueDate: orderData.dueDate
+      });
+      
+      const newOrder = mapApiOrderToFrontend(apiOrder);
       
       // Adicionar ao estado local
       dispatch({ type: 'ADD_ORDER', payload: newOrder });
       
-      // Salvar no data.ts para persistência
-      addOrder(orderData);
-      
-      // Mostrar notificação
-      toast.success('🎉 Novo orçamento público recebido!', {
-        description: `${newOrder.title} foi adicionado ao kanban automaticamente.`,
+      toast.success('🎉 Pedido criado com sucesso!', {
+        description: `${newOrder.title} foi adicionado ao kanban.`,
         duration: 5000,
       });
       
       return newOrder;
-    } catch (error) {
-      console.error('Erro ao adicionar pedido público:', error);
-      toast.error('Erro ao processar orçamento público');
+    } catch (error: any) {
+      console.error('❌ [API] Erro ao criar pedido:', error);
+      toast.error('Erro ao criar pedido', {
+        description: error.message || 'Não foi possível criar o pedido',
+        duration: 5000,
+      });
       throw error;
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
-  };
-  
-  // Função para forçar atualização do localStorage
-  const refreshFromStorage = () => {
-    dispatch({ type: 'SYNC_FROM_STORAGE' });
   };
   
   // Função para buscar pedido por ID
@@ -511,9 +432,9 @@ export function KanbanProvider({ children }: KanbanProviderProps) {
     state,
     dispatch,
     addPublicOrder,
-    refreshFromStorage,
     refreshFromApi,
-    getOrderById
+    getOrderById,
+    updateOrderStatusApi
   };
   
   return (
