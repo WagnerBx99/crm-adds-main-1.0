@@ -59,6 +59,7 @@ import {
 } from "@/components/ui/select";
 import { useKanban } from '@/contexts/KanbanContext';
 import { userService } from '@/lib/services/userService';
+import { apiService } from '@/lib/services/apiService';
 import { Label } from '@/types';
 
 interface QuoteAction {
@@ -136,25 +137,47 @@ export function PublicQuotesManager() {
     };
   }, []);
 
-  const loadQuotes = () => {
+  const loadQuotes = async () => {
     try {
-      const storedQuotes = JSON.parse(localStorage.getItem('publicQuotes') || '[]');
-      // Converter strings de data para objetos Date
-      const parsedQuotes = storedQuotes.map((quote: any) => ({
-        ...quote,
-        timestamp: new Date(quote.timestamp),
-        lastContactDate: quote.lastContactDate ? new Date(quote.lastContactDate) : undefined,
-        approvedAt: quote.approvedAt ? new Date(quote.approvedAt) : undefined,
-        rejectedAt: quote.rejectedAt ? new Date(quote.rejectedAt) : undefined,
-        actions: quote.actions?.map((action: any) => ({
-          ...action,
-          timestamp: new Date(action.timestamp)
-        })) || []
-      }));
-      setQuotes(parsedQuotes.reverse()); // Mais recentes primeiro
-    } catch (error) {
-      console.error('Erro ao carregar solicitações:', error);
-      toast.error('Erro ao carregar solicitações de orçamento');
+      console.log('🌐 [API] Carregando orçamentos públicos do backend...');
+      const response = await apiService.getPublicQuotes();
+      
+      if (response && response.data) {
+        // Converter dados da API para o formato esperado
+        const parsedQuotes = response.data.map((quote: any) => ({
+          id: quote.id,
+          customer: {
+            name: quote.customerName || quote.customer?.name || 'Cliente não informado',
+            phone: quote.customerPhone || quote.customer?.phone || '',
+            email: quote.customerEmail || quote.customer?.email || '',
+            company: quote.customerCompany || quote.customer?.company || ''
+          },
+          product: quote.product || null,
+          products: quote.products || [],
+          customization: quote.customization || {},
+          timestamp: new Date(quote.createdAt),
+          status: quote.status || 'pending',
+          notes: quote.notes || '',
+          assignedTo: quote.assignedTo || undefined,
+          estimatedValue: quote.estimatedValue || undefined,
+          lastContactDate: quote.lastContactDate ? new Date(quote.lastContactDate) : undefined,
+          actions: quote.actions || [],
+          approvedBy: quote.approvedBy || undefined,
+          approvedAt: quote.approvedAt ? new Date(quote.approvedAt) : undefined,
+          rejectedBy: quote.rejectedBy || undefined,
+          rejectedAt: quote.rejectedAt ? new Date(quote.rejectedAt) : undefined
+        }));
+        setQuotes(parsedQuotes.reverse()); // Mais recentes primeiro
+        console.log(`✅ [API] ${parsedQuotes.length} orçamentos carregados`);
+      } else {
+        setQuotes([]);
+      }
+    } catch (error: any) {
+      console.error('❌ [API] Erro ao carregar solicitações:', error);
+      toast.error('Erro ao carregar solicitações de orçamento', {
+        description: error.message || 'Não foi possível conectar ao servidor'
+      });
+      setQuotes([]);
     }
   };
 

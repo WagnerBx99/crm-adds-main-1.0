@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Customer } from '@/types';
-import { customers as mockCustomers } from '@/lib/data';
+import { apiService } from '@/lib/services/apiService';
 import { syncContactsWithTiny } from '@/lib/services/contactService';
 import { searchTinyContactByCriteria } from '@/lib/services/tinyService';
 import { toast } from 'sonner';
@@ -37,7 +37,7 @@ export default function CustomerSearch({
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [showResults, setShowResults] = useState(false);
-  const [localCustomers, setLocalCustomers] = useState<Customer[]>(mockCustomers);
+  const [localCustomers, setLocalCustomers] = useState<Customer[]>([]);
   const [syncStatus, setSyncStatus] = useState<{
     lastSync: Date | null;
     status: 'idle' | 'success' | 'error';
@@ -61,16 +61,40 @@ export default function CustomerSearch({
     }
   }, [selectedCustomerId, localCustomers]);
 
-  // Carregar contatos locais do localStorage se disponível
+  // Carregar contatos da API do backend
   useEffect(() => {
-    const savedContacts = localStorage.getItem('customers');
-    if (savedContacts) {
+    const loadCustomers = async () => {
       try {
-        const parsed = JSON.parse(savedContacts);
-        setLocalCustomers([...mockCustomers, ...parsed]);
+        console.log('🌐 [API] Carregando clientes do backend...');
+        const response = await apiService.getCustomers();
+        if (response && response.data) {
+          const customers = response.data.map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            email: c.email || '',
+            phone: c.phone || '',
+            company: c.company || '',
+            document: c.document || '',
+            personType: c.personType || '',
+            zipCode: c.zipCode || '',
+            city: c.city || '',
+            state: c.state || '',
+            address: c.address || '',
+            neighborhood: c.neighborhood || '',
+            number: c.number || '',
+            complement: c.complement || '',
+            createdAt: new Date(c.createdAt)
+          }));
+          setLocalCustomers(customers);
+          console.log(`✅ [API] ${customers.length} clientes carregados`);
+        }
       } catch (error) {
-        console.error('Erro ao carregar contatos salvos:', error);
+        console.error('❌ [API] Erro ao carregar clientes:', error);
       }
+    };
+    
+    if (apiService.isAuthenticated()) {
+      loadCustomers();
     }
   }, []);
 
@@ -245,24 +269,39 @@ export default function CustomerSearch({
     }
   };
 
-  const saveCustomerLocally = (customer: Customer) => {
+  const saveCustomerLocally = async (customer: Customer) => {
     try {
-      const savedContacts = localStorage.getItem('customers') || '[]';
-      const existingContacts = JSON.parse(savedContacts);
-      
-      // Verificar se já existe
-      const exists = existingContacts.some((c: Customer) => 
+      // Verificar se já existe localmente
+      const exists = localCustomers.some((c: Customer) => 
         c.id === customer.id || c.document === customer.document || c.email === customer.email
       );
 
       if (!exists) {
-        existingContacts.push(customer);
-        localStorage.setItem('customers', JSON.stringify(existingContacts));
-        setLocalCustomers(prev => [...prev, customer]);
-        toast.success('Cliente adicionado ao cadastro local');
+        // Salvar no backend via API
+        console.log('🌐 [API] Salvando cliente no backend...');
+        const savedCustomer = await apiService.createCustomer({
+          name: customer.name,
+          email: customer.email,
+          phone: customer.phone,
+          company: customer.company,
+          document: customer.document,
+          personType: customer.personType,
+          zipCode: customer.zipCode,
+          city: customer.city,
+          state: customer.state,
+          address: customer.address,
+          neighborhood: customer.neighborhood,
+          number: customer.number,
+          complement: customer.complement
+        });
+        
+        setLocalCustomers(prev => [...prev, { ...customer, id: savedCustomer.id }]);
+        toast.success('Cliente adicionado ao cadastro');
+        console.log('✅ [API] Cliente salvo com sucesso');
       }
     } catch (error) {
-      console.error('Erro ao salvar cliente localmente:', error);
+      console.error('❌ [API] Erro ao salvar cliente:', error);
+      toast.error('Erro ao salvar cliente');
     }
   };
 
@@ -279,11 +318,31 @@ export default function CustomerSearch({
         message: `Sincronização concluída: ${result.added} adicionados, ${result.updated} atualizados, ${result.failed} falhas`
       });
 
-      // Recarregar contatos locais
-      const savedContacts = localStorage.getItem('customers');
-      if (savedContacts) {
-        const parsed = JSON.parse(savedContacts);
-        setLocalCustomers([...mockCustomers, ...parsed]);
+      // Recarregar contatos do backend
+      try {
+        const response = await apiService.getCustomers();
+        if (response && response.data) {
+          const customers = response.data.map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            email: c.email || '',
+            phone: c.phone || '',
+            company: c.company || '',
+            document: c.document || '',
+            personType: c.personType || '',
+            zipCode: c.zipCode || '',
+            city: c.city || '',
+            state: c.state || '',
+            address: c.address || '',
+            neighborhood: c.neighborhood || '',
+            number: c.number || '',
+            complement: c.complement || '',
+            createdAt: new Date(c.createdAt)
+          }));
+          setLocalCustomers(customers);
+        }
+      } catch (err) {
+        console.error('Erro ao recarregar clientes:', err);
       }
 
       toast.success(`Sincronização concluída! ${result.added} novos contatos adicionados.`);
