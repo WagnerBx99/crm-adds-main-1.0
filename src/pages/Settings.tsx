@@ -1300,7 +1300,7 @@ export default function Settings() {
         return <SecuritySettings />;
       
       case 'integrations':
-        return <TinyIntegrationSettings />;
+        return <SystemSettings />;
         
       case 'backup':
         return <BackupSettings />;
