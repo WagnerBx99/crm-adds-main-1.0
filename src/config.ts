@@ -50,3 +50,16 @@ export const APP_CONFIG = {
   DATE_FORMAT: 'dd/MM/yyyy',
   CURRENCY_FORMAT: 'pt-BR',
 };
+
+// Objeto CONFIG consolidado para compatibilidade
+export const CONFIG = {
+  USE_BACKEND_API,
+  API_BASE_URL,
+  TINY_CONFIG,
+  APP_ENV,
+  USE_MOCK_API,
+  ...APP_CONFIG,
+};
+
+// Alias para compatibilidade
+export const config = CONFIG;

@@ -676,6 +676,23 @@ export function SystemSettings() {
                   />
             </div>
             
+<Separator className="my-4" />
+                
+                <div className="space-y-2">
+                  <Label>Documentação da API</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Acesse a documentação completa da API do CRM ADDS para integrações personalizadas.
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => window.open('http://31.97.253.85:3001/api/docs/', '_blank')}
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    Abrir Documentação da API (Swagger)
+                  </Button>
+                </div>
+                
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>Informação</AlertTitle>

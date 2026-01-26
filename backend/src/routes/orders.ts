@@ -129,6 +129,15 @@ router.get('/kanban', authenticate, async (req: Request, res: Response) => {
         checklists: {
           include: { items: true }
         },
+        history: {
+          include: {
+            user: { select: { id: true, name: true } }
+          },
+          orderBy: { createdAt: 'desc' }
+        },
+        artworkActionLogs: {
+          orderBy: { timestamp: 'desc' }
+        },
         _count: {
           select: { 
             comments: true, 
