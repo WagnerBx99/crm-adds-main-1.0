@@ -5,12 +5,35 @@ const BACKEND_URL = 'http://31.97.253.85:3001';
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // Construir a URL do backend
-    const path = Array.isArray(req.query.path) ? req.query.path.join('/') : req.query.path || '';
-    const queryString = new URL(req.url || '', `https://${req.headers.host}`).search;
+    // O path vem como array quando usa [...path]
+    let path = '';
+    if (req.query.path) {
+      path = Array.isArray(req.query.path) ? req.query.path.join('/') : req.query.path;
+    }
+    
+    // Construir query string (excluindo o path)
+    const url = new URL(req.url || '', `https://${req.headers.host}`);
+    const searchParams = new URLSearchParams(url.search);
+    searchParams.delete('path');
+    const queryString = searchParams.toString() ? `?${searchParams.toString()}` : '';
+    
     const targetUrl = `${BACKEND_URL}/api/${path}${queryString}`;
+    
+    console.log('Proxy request to:', targetUrl);
 
-    // Preparar headers
-    const headers: Record<string, string> = {};
+    // Responder com OPTIONS para preflight CORS
+    if (req.method === 'OPTIONS') {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      res.setHeader('Access-Control-Max-Age', '86400');
+      return res.status(200).end();
+    }
+
+    // Preparar headers para o backend
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
     
     // Copiar headers relevantes
     if (req.headers.authorization) {
@@ -20,48 +43,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       headers['Content-Type'] = req.headers['content-type'] as string;
     }
 
+    // Preparar body
+    let body: string | undefined;
+    if (req.method !== 'GET' && req.method !== 'HEAD' && req.body) {
+      body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+    }
+
     // Fazer a requisição ao backend
     const response = await fetch(targetUrl, {
       method: req.method || 'GET',
       headers,
-      body: req.method !== 'GET' && req.method !== 'HEAD' ? JSON.stringify(req.body) : undefined,
+      body,
     });
 
-    // Copiar headers da resposta
-    const responseHeaders: Record<string, string> = {};
-    response.headers.forEach((value, key) => {
-      if (!['content-encoding', 'transfer-encoding', 'content-length'].includes(key.toLowerCase())) {
-        responseHeaders[key] = value;
-      }
-    });
+    // Adicionar headers CORS na resposta
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-    // Adicionar headers CORS
-    responseHeaders['Access-Control-Allow-Origin'] = '*';
-    responseHeaders['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, PATCH, OPTIONS';
-    responseHeaders['Access-Control-Allow-Headers'] = 'Content-Type, Authorization';
-
-    // Responder com OPTIONS para preflight
-    if (req.method === 'OPTIONS') {
-      res.status(200).setHeader('Access-Control-Allow-Origin', '*')
-        .setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS')
-        .setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-        .end();
-      return;
+    // Copiar content-type da resposta
+    const contentType = response.headers.get('content-type');
+    if (contentType) {
+      res.setHeader('Content-Type', contentType);
     }
 
     // Retornar a resposta
     const data = await response.text();
     
-    Object.entries(responseHeaders).forEach(([key, value]) => {
-      res.setHeader(key, value);
-    });
-
-    res.status(response.status).send(data);
+    return res.status(response.status).send(data);
   } catch (error) {
     console.error('Proxy error:', error);
-    res.status(500).json({ 
+    return res.status(500).json({ 
       error: 'Proxy Error', 
-      message: error instanceof Error ? error.message : 'Unknown error' 
+      message: error instanceof Error ? error.message : 'Unknown error',
+      details: 'Erro ao conectar com o backend'
     });
   }
 }
