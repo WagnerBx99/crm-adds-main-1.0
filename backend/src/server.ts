@@ -32,9 +32,22 @@ export const prisma = new PrismaClient();
 // Criar aplicação Express
 const app = express();
 
+// Configurar origens permitidas para CORS
+const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',').map(origin => origin.trim());
+
 // Middlewares globais
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  origin: function(origin, callback) {
+    // Permitir requisições sem origin (como apps mobile ou Postman)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('CORS bloqueado para origem:', origin);
+      callback(null, true); // Permitir temporariamente para debug
+    }
+  },
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
