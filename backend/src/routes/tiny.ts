@@ -498,4 +498,59 @@ router.post('/sync/contatos', authenticate, authorize('MASTER', 'GESTOR'), async
   }
 });
 
+/**
+ * POST /api/tiny/test-connection
+ * Testar conexão com a API Tiny
+ */
+router.post('/test-connection', authenticate, async (req: Request, res: Response) => {
+  try {
+    const integration = await prisma.tinyIntegration.findFirst();
+    
+    if (!integration?.apiToken) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Bad Request', 
+        message: 'Token da API Tiny não configurado' 
+      });
+    }
+    
+    // Tentar fazer uma requisição simples à API Tiny
+    try {
+      const result = await tinyRequest('info.php', integration.apiToken);
+      
+      // Verificar se a resposta indica sucesso
+      if (result?.retorno?.status_processamento === '3' || result?.retorno?.codigo_erro) {
+        // Erro de autenticação ou token inválido
+        return res.json({
+          success: false,
+          message: result?.retorno?.erros?.[0]?.erro || 'Token inválido ou expirado',
+          details: result?.retorno
+        });
+      }
+      
+      // Conexão bem-sucedida
+      return res.json({
+        success: true,
+        message: 'Conexão estabelecida com sucesso',
+        apiUrl: TINY_API_BASE_URL,
+        lastSyncAt: integration.lastSyncAt
+      });
+    } catch (apiError: any) {
+      console.error('Erro ao testar conexão com Tiny:', apiError);
+      return res.json({
+        success: false,
+        message: 'Erro ao conectar com a API do Tiny',
+        error: apiError.message
+      });
+    }
+  } catch (error) {
+    console.error('Erro ao testar conexão:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Internal Server Error', 
+      message: 'Erro ao testar conexão' 
+    });
+  }
+});
+
 export default router;

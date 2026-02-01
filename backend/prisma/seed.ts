@@ -204,11 +204,30 @@ async function main() {
     console.log('✅ Configuração criada:', config.key);
   }
 
+  // Criar configuração da integração Tiny
+  const tinyIntegration = await prisma.tinyIntegration.upsert({
+    where: { id: 'tiny-integration-default' },
+    update: {
+      apiToken: '8f45883a76440801fab9969236bad8a843393d693ab7ead62a2eced20859ca3a'
+    },
+    create: {
+      id: 'tiny-integration-default',
+      apiToken: '8f45883a76440801fab9969236bad8a843393d693ab7ead62a2eced20859ca3a',
+      config: {
+        baseUrl: 'https://api.tiny.com.br/api2/',
+        timeout: 15000
+      }
+    }
+  });
+  console.log('✅ Integração Tiny configurada');
+
   console.log('\n🎉 Seed concluído com sucesso!');
   console.log('\n📋 Credenciais de acesso:');
   console.log('   MASTER: admin@exemplo.com / admin123');
   console.log('   GESTOR: gestor@exemplo.com / gestor123');
   console.log('   PRESTADOR: prestador@exemplo.com / prestador123');
+  console.log('\n🔗 Integração Tiny:');
+  console.log('   Token configurado: 8f4588...ca3a');
 }
 
 main()

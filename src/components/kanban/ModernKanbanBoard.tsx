@@ -354,7 +354,7 @@ const MetricCard = ({ icon: Icon, value, label, color, tooltip }: MetricCardProp
 };
 
 export default function ModernKanbanBoard() {
-  const { state, dispatch } = useKanban();
+  const { state, dispatch, updateOrderStatusApi } = useKanban();
   const { width: viewportWidth } = useViewport();
   const columnWidth = useColumnWidth();
   
@@ -893,13 +893,21 @@ export default function ModernKanbanBoard() {
         payload: { orderId: draggableId, newStatus: toColumn.id }
       });
       
+      // Salvar no backend imediatamente
+      updateOrderStatusApi(draggableId, toColumn.id).catch(error => {
+        console.error('❌ Erro ao salvar status no backend:', error);
+      });
+      
       // Toast sem delay
       showMoveSuccess(
         draggedOrder.title,
         fromColumn.id,
         toColumn.id,
         () => {
-          handleUpdateStatus(draggableId, fromColumn.id);
+          // Rollback: voltar para status anterior
+          updateOrderStatusApi(draggableId, fromColumn.id).catch(error => {
+            console.error('❌ Erro ao fazer rollback:', error);
+          });
         }
       );
       
@@ -913,13 +921,14 @@ export default function ModernKanbanBoard() {
     console.log('🏁 Estado depois do drop', JSON.stringify(state.columns.map(c => ({id: c.id, orderIds: c.orders.map(o => o.id)}))));
   }, [
     state.columns, 
-    handleUpdateStatus, 
+    updateOrderStatusApi,
     dispatch, 
     showMoveSuccess,
     showReorderSuccess,
     showError,
     clearAutoScroll,
-    statusNames
+    statusNames,
+    optimisticSnapshot
   ]);
 
   // Labels ativos
