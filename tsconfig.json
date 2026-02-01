@@ -35,5 +35,5 @@
     "strictNullChecks": false
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/**/*"],
-  "exclude": ["node_modules", "backend"]
+  "exclude": ["node_modules", "backend", "src/tests", "**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"]
 }
