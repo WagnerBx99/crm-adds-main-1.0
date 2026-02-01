@@ -65,6 +65,7 @@ import {
   statusNames
 } from '@/lib/data';
 import { useKanban } from '@/contexts/KanbanContext';
+import { apiService } from '@/lib/services/apiService';
 import { useViewport, useColumnWidth } from '@/hooks/useViewport';
 import { useAutoScroll } from '@/hooks/useAutoScroll';
 import { useCardToast } from '@/hooks/useCardToast';
@@ -893,9 +894,14 @@ export default function ModernKanbanBoard() {
         payload: { orderId: draggableId, newStatus: toColumn.id }
       });
       
-      // Salvar no backend imediatamente
-      updateOrderStatusApi(draggableId, toColumn.id).catch(error => {
+      // Salvar no backend imediatamente (sem dispatch adicional para evitar conflito)
+      apiService.updateOrderStatus(draggableId, toColumn.id).catch(error => {
         console.error('❌ Erro ao salvar status no backend:', error);
+        toast.error('Erro ao salvar', {
+          description: 'Não foi possível salvar a mudança. Recarregando dados...',
+        });
+        // Recarregar dados em caso de erro
+        window.location.reload();
       });
       
       // Toast sem delay
@@ -905,7 +911,11 @@ export default function ModernKanbanBoard() {
         toColumn.id,
         () => {
           // Rollback: voltar para status anterior
-          updateOrderStatusApi(draggableId, fromColumn.id).catch(error => {
+          dispatch({
+            type: 'UPDATE_ORDER_STATUS',
+            payload: { orderId: draggableId, newStatus: fromColumn.id }
+          });
+          apiService.updateOrderStatus(draggableId, fromColumn.id).catch(error => {
             console.error('❌ Erro ao fazer rollback:', error);
           });
         }
@@ -921,7 +931,6 @@ export default function ModernKanbanBoard() {
     console.log('🏁 Estado depois do drop', JSON.stringify(state.columns.map(c => ({id: c.id, orderIds: c.orders.map(o => o.id)}))));
   }, [
     state.columns, 
-    updateOrderStatusApi,
     dispatch, 
     showMoveSuccess,
     showReorderSuccess,
