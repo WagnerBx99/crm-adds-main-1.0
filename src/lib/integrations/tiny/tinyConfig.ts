@@ -3,19 +3,26 @@ import { TINY_CONFIG } from '../../../config';
 
 /**
  * Configuração da API Tiny
- * Em ambiente de desenvolvimento, usamos credenciais de teste
- * Em produção, esses valores devem ser carregados de variáveis de ambiente ou configuração segura
+ * Todas as configurações são centralizadas em /src/config.ts
+ * Este arquivo apenas exporta a configuração formatada para o TinyApiService
  */
 export const tinyConfig: TinyApiConfig = {
-  clientId: process.env.TINY_CLIENT_ID || 'tiny-api-26468819e59f580baea6e238dfef2cb1bad1d112-1741702565',
-  clientSecret: process.env.TINY_CLIENT_SECRET || '4HfPNKKKKw4BRpEZWb27O680uY9KJw1C',
-  token: TINY_CONFIG.API_TOKEN, // Usando o token da configuração centralizada
-  baseUrl: TINY_CONFIG.API_BASE_URL || 'https://api.tiny.com.br/api2/',
-  apiV3Url: process.env.TINY_API_V3_URL || 'https://api.tiny.com.br/api2/', // API v3 usa o mesmo base URL + oauth2
-  timeout: 15000, // 15 segundos
-  cache: false, // Desativando cache para garantir dados atualizados
-  cacheExpiration: 1800000, // 30 minutos
-  useOAuth: false // Define se deve usar OAuth2 (API v3) ou token simples (API v2)
+  // Credenciais OAuth (para API v3 - não utilizado atualmente)
+  clientId: import.meta.env?.VITE_TINY_CLIENT_ID || 'tiny-api-26468819e59f580baea6e238dfef2cb1bad1d112-1741702565',
+  clientSecret: import.meta.env?.VITE_TINY_CLIENT_SECRET || '4HfPNKKKKw4BRpEZWb27O680uY9KJw1C',
+  
+  // Token da API v2 (método principal)
+  token: TINY_CONFIG.API_TOKEN,
+  
+  // URLs da API
+  baseUrl: TINY_CONFIG.API_BASE_URL,
+  apiV3Url: 'https://api.tiny.com.br/api2/', // API v3 usa o mesmo base URL
+  
+  // Configurações de comportamento
+  timeout: TINY_CONFIG.TIMEOUT || 15000,
+  cache: TINY_CONFIG.CACHE_ENABLED || false,
+  cacheExpiration: TINY_CONFIG.CACHE_EXPIRATION || 1800000,
+  useOAuth: false // API v2 usa token simples, não OAuth
 };
 
 /**

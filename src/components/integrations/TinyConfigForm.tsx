@@ -53,46 +53,44 @@ const TinyConfigForm: React.FC<TinyConfigFormProps> = ({ onSave }) => {
     setSuccessMessage(null);
 
     try {
-      // Atualiza a configuração global
-      TINY_CONFIG.API_TOKEN = token;
-      TINY_CONFIG.API_BASE_URL = baseUrl;
-      
-      // Salvar configurações em localStorage para persistir
-      localStorage.setItem('tiny_config', JSON.stringify({
+      // Salvar configurações em localStorage para persistir entre sessões
+      const configToSave = {
         token,
         baseUrl,
         clientId: useOAuth ? clientId : '',
         clientSecret: useOAuth ? clientSecret : '',
         useOAuth
-      }));
-
-      console.log('[TinyConfigForm] Configuração salva:', { token, baseUrl, useOAuth });
+      };
+      
+      localStorage.setItem('tiny_config', JSON.stringify(configToSave));
+      console.log('[TinyConfigForm] Configuração salva no localStorage:', { ...configToSave, token: '***' });
 
       // Reinicializar o serviço com as novas configurações
+      // O serviço irá usar as novas credenciais para as requisições
       await tinyService.reinitialize({
         token,
         baseUrl,
         clientId: useOAuth ? clientId : '',
         clientSecret: useOAuth ? clientSecret : '',
         useOAuth,
-        cache: false // Desativa cache temporariamente
+        cache: false // Desativa cache para garantir dados atualizados
       });
 
       // Limpar qualquer cache existente
       await clearCache();
 
-      // Testar conexão
+      // Testar conexão com as novas credenciais
       const connected = await tinyService.testConnection();
       
       if (connected) {
         setIsConnected(true);
-        setSuccessMessage('Conexão com o Tiny ERP estabelecida com sucesso!');
-        setTimeout(() => onSave(), 1500); // Fecha após 1,5 segundos
+        setSuccessMessage('Conexao com o Tiny ERP estabelecida com sucesso!');
+        setTimeout(() => onSave(), 1500); // Fecha apos 1,5 segundos
       } else {
-        throw new Error('Não foi possível estabelecer conexão com o Tiny ERP');
+        throw new Error('Nao foi possivel estabelecer conexao com o Tiny ERP');
       }
     } catch (error: any) {
-      console.error('Erro ao configurar conexão com o Tiny:', error);
+      console.error('Erro ao configurar conexao com o Tiny:', error);
       setErrorMessage(error.message || 'Falha ao conectar com o Tiny ERP. Verifique as credenciais e tente novamente.');
       setIsConnected(false);
     } finally {
