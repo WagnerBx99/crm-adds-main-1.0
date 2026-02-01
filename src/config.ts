@@ -44,7 +44,7 @@ const getTinyApiUrl = (): string => {
 
 // Configurações da API Tiny
 export const TINY_CONFIG = {
-  API_TOKEN: getEnvVariable('VITE_TINY_API_TOKEN', '8f45883a76440801fab9969236bad8a843393d693ab7ead62a2eced20859ca3a'),
+  API_TOKEN: getEnvVariable('VITE_TINY_API_TOKEN', '9a6db31b0fc596d5911e541f7502c1bfd559744dfe4ba44b99129e876d36c581'),
   API_BASE_URL: getTinyApiUrl(),
   // Configurações adicionais
   TIMEOUT: 15000,
