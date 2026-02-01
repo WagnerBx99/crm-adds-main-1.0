@@ -175,17 +175,16 @@ export class TinyApiClient {
 
   /**
    * Realiza uma requisição GET para a API do Tiny
+   * Usa proxy local para evitar CORS
    */
   async get<T>(endpoint: string, params: Record<string, any> = {}): Promise<T> {
     try {
       const url = `${this.baseUrl}${endpoint}`;
-      console.log(`[TinyAPI] Requisição GET para: ${url}`);
-      console.log(`[TinyAPI] Parâmetros:`, params);
+      console.log(`[TinyAPI] Requisição para: ${endpoint} com params:`, params);
       
+      // Nao envia token/formato pois o proxy ja adiciona
       const response = await axios.get(url, {
         params: {
-          token: this.token,
-          formato: 'json',
           ...params,
         },
         headers: {
@@ -231,16 +230,16 @@ export class TinyApiClient {
 
   /**
    * Realiza uma requisição POST para a API do Tiny
+   * Usa proxy local para evitar CORS
    */
   async post<T>(endpoint: string, data: Record<string, any> = {}): Promise<T> {
     try {
       const url = `${this.baseUrl}${endpoint}`;
-      console.log(`[TinyAPI] Requisição POST para: ${url}`);
+      console.log(`[TinyAPI] Requisição POST para: ${endpoint}`);
       
-      // Preparar dados para formato aplicável à API Tiny
+      // Preparar dados para formato aplicavel a API Tiny
+      // Nao envia token/formato pois o proxy ja adiciona
       const formData = new URLSearchParams();
-      formData.append('token', this.token);
-      formData.append('formato', 'json');
       
       for (const [key, value] of Object.entries(data)) {
         formData.append(key, typeof value === 'object' ? JSON.stringify(value) : String(value));

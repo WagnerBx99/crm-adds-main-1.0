@@ -27,19 +27,14 @@ const isDevelopment = getEnvVariable('VITE_APP_ENV', 'development') === 'develop
 export const API_BASE_URL = getEnvVariable('VITE_API_BASE_URL', 'http://31.97.253.85:3001/api');
 
 // URL base da API Tiny
-// Em desenvolvimento usa proxy do Vite para evitar CORS
-// Em produção usa a URL direta da API do Tiny
+// Usa o backend na VPS Hostinger para evitar CORS
 const getTinyApiUrl = (): string => {
   const envUrl = getEnvVariable('VITE_TINY_API_BASE_URL', '');
   if (envUrl) return envUrl;
   
-  // Em desenvolvimento, usar o proxy configurado no vite.config.ts
-  if (isDevelopment) {
-    return '/api/tiny/';
-  }
-  
-  // Em produção, usar a API diretamente (requer CORS ou backend proxy)
-  return 'https://api.tiny.com.br/api2/';
+  // Usa o backend na VPS para fazer proxy das chamadas Tiny
+  // O backend esta em http://31.97.253.85:3001/api/tiny/
+  return 'http://31.97.253.85:3001/api/tiny/';
 };
 
 // Configurações da API Tiny
