@@ -2,9 +2,23 @@ import axios from "axios";
 import { Contact } from "@/lib/types";
 import { TINY_CONFIG, USE_MOCK_API } from "@/config";
 
+/**
+ * Serviço legado para comunicação com a API do Tiny
+ * 
+ * NOTA: Este arquivo é mantido para compatibilidade com código existente.
+ * Para novas implementações, use o TinyApiService em /src/lib/integrations/tiny/
+ * 
+ * @see /src/lib/integrations/tiny/TinyApiService.ts
+ */
+
 // Usar o token da API do arquivo de configuração centralizado
 const TINY_API_TOKEN = TINY_CONFIG.API_TOKEN;
 const TINY_API_BASE_URL = TINY_CONFIG.API_BASE_URL;
+
+// Helper para normalizar a URL base (remover barra final se houver)
+const normalizeBaseUrl = (url: string): string => {
+  return url.endsWith('/') ? url.slice(0, -1) : url;
+};
 
 // Dados simulados para desenvolvimento
 const mockContacts: Contact[] = [

@@ -10,15 +10,32 @@ export default defineConfig(({ mode }) => ({
     port: 5173,
     allowedHosts: true,
     proxy: {
-      // Configuração de proxy para a API do Tiny
+      // Configuração de proxy para a API do Tiny ERP
+      // Isso permite evitar problemas de CORS durante o desenvolvimento
       '/api/tiny': {
         target: 'https://api.tiny.com.br/api2',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/tiny/, ''),
+        rewrite: (path) => {
+          // Remove o prefixo /api/tiny e normaliza barras duplas
+          const newPath = path.replace(/^\/api\/tiny\/?/, '/').replace(/\/+/g, '/');
+          console.log(`[Vite Proxy] ${path} -> ${newPath}`);
+          return newPath;
+        },
         secure: true,
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        configure: (proxy) => {
+          proxy.on('error', (err) => {
+            console.error('[Vite Proxy] Erro no proxy:', err.message);
+          });
+          proxy.on('proxyReq', (proxyReq, req) => {
+            console.log(`[Vite Proxy] Requisição: ${req.method} ${req.url}`);
+          });
+          proxy.on('proxyRes', (proxyRes, req) => {
+            console.log(`[Vite Proxy] Resposta: ${proxyRes.statusCode} para ${req.url}`);
+          });
         }
       }
     }

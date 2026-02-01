@@ -20,18 +20,36 @@ const getEnvVariable = (key: string, defaultValue: string = ''): string => {
 };
 
 // Identifica se está em ambiente de desenvolvimento
-const isDevelopment = getEnvVariable('VITE_APP_ENV', 'development') === 'development';
+const isDevelopment = getEnvVariable('VITE_APP_ENV', 'development') === 'development' || 
+                      typeof window !== 'undefined' && window.location.hostname === 'localhost';
 
 // URL base da API Backend (PostgreSQL)
 export const API_BASE_URL = getEnvVariable('VITE_API_BASE_URL', 'http://31.97.253.85:3001/api');
 
-// URL base da API Tiny (usando proxy em desenvolvimento)
-const baseTinyApiUrl = isDevelopment ? '/api/tiny/' : 'https://api.tiny.com.br/api2/';
+// URL base da API Tiny
+// Em desenvolvimento usa proxy do Vite para evitar CORS
+// Em produção usa a URL direta da API do Tiny
+const getTinyApiUrl = (): string => {
+  const envUrl = getEnvVariable('VITE_TINY_API_BASE_URL', '');
+  if (envUrl) return envUrl;
+  
+  // Em desenvolvimento, usar o proxy configurado no vite.config.ts
+  if (isDevelopment) {
+    return '/api/tiny/';
+  }
+  
+  // Em produção, usar a API diretamente (requer CORS ou backend proxy)
+  return 'https://api.tiny.com.br/api2/';
+};
 
 // Configurações da API Tiny
 export const TINY_CONFIG = {
   API_TOKEN: getEnvVariable('VITE_TINY_API_TOKEN', '8f45883a76440801fab9969236bad8a843393d693ab7ead62a2eced20859ca3a'),
-  API_BASE_URL: baseTinyApiUrl,
+  API_BASE_URL: getTinyApiUrl(),
+  // Configurações adicionais
+  TIMEOUT: 15000,
+  CACHE_ENABLED: false, // Desabilitado por padrão para garantir dados atualizados
+  CACHE_EXPIRATION: 1800000, // 30 minutos
 };
 
 // Ambiente da aplicação
