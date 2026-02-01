@@ -518,22 +518,31 @@ router.post('/test-connection', authenticate, async (req: Request, res: Response
     try {
       const result = await tinyRequest('info.php', integration.apiToken);
       
-      // Verificar se a resposta indica sucesso
-      if (result?.retorno?.status_processamento === '3' || result?.retorno?.codigo_erro) {
-        // Erro de autenticação ou token inválido
+      // Verificar se há erro de autenticação
+      if (result?.retorno?.codigo_erro) {
         return res.json({
           success: false,
-          message: result?.retorno?.erros?.[0]?.erro || 'Token inválido ou expirado',
+          message: result?.retorno?.erros?.[0]?.erro || 'Erro na API Tiny',
           details: result?.retorno
         });
       }
       
-      // Conexão bem-sucedida
+      // status_processamento: 3 = Solicitação processada corretamente (SUCESSO)
+      if (result?.retorno?.status_processamento === '3' || result?.retorno?.status === 'OK') {
+        return res.json({
+          success: true,
+          message: 'Conexão estabelecida com sucesso',
+          apiUrl: TINY_API_BASE_URL,
+          accountInfo: result?.retorno?.conta,
+          lastSyncAt: integration.lastSyncAt
+        });
+      }
+      
+      // Outros status de processamento (1, 2, 4)
       return res.json({
-        success: true,
-        message: 'Conexão estabelecida com sucesso',
-        apiUrl: TINY_API_BASE_URL,
-        lastSyncAt: integration.lastSyncAt
+        success: false,
+        message: 'Status de processamento inesperado',
+        details: result?.retorno
       });
     } catch (apiError: any) {
       console.error('Erro ao testar conexão com Tiny:', apiError);
